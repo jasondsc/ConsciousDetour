@@ -50,6 +50,70 @@ ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/
 
 
 
+```{r Calculate Hamming distance}
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_Lateralized.json')
+
+json_data2 <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_Nonlateralized.json')
+
+json_data <-append(json_data, json_data2)
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+# compute hamming distance between mazes to see how similar they are perceptually 
+hamming_distance <- function(mazeA, mazeB){
+  m=dim(mazeA)[1]
+  n=dim(mazeA)[2]
+  
+  if(dim(mazeA)[1] != dim(mazeB)[1] || dim(mazeA)[2] != dim(mazeB)[2]) {
+    stop("inputs not the same size")
+  }
+  # binarize matrix
+  mazeA[mazeA!='.']=1
+  mazeB[mazeB!='.']=1
+  
+  mazeA[mazeA=='.']=0
+  mazeB[mazeB=='.']=0
+  
+  # get diff
+  diffmaze= matrix(as.numeric(mazeA), nrow = 11)- matrix(as.numeric(mazeB), nrow = 11)
+  hamming_dist= sum(abs(diffmaze))
+
+  return(hamming_dist)
+}
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+hamming_dist_mazes= matrix(, nrow=length(json_data)*length(json_data), 3)
+count=1
+for (i in 1:length(json_data)){
+  for (j in 1:length(json_data)){
+    hamming_dist_mazes[count,1]= i
+    hamming_dist_mazes[count,2]= j
+    hamming_dist_mazes[count,3]= hamming_distance(matrix_mazes[[i]], matrix_mazes[[j]])
+    count=count+1
+  }
+}
+
+hamming_dist_mazes= as.data.frame(hamming_dist_mazes)
+colnames(hamming_dist_mazes)= c('x', 'y', 'hamming_dist')
+library(ggplot2)
+
+ggplot(hamming_dist_mazes, aes(x, y, fill= hamming_dist)) + 
+  geom_tile() + scale_y_reverse()+  theme_void() + colorspace::scale_fill_continuous_sequential(palette= 'Lajolla', rev= FALSE, limits= c(0, 50)) + geom_hline(aes(yintercept = 24.5), colour = 'white') + geom_vline(aes(xintercept = 24.5), colour = 'white') + 
+  theme(legend.key.height = unit(1, "cm"),
+        legend.title = element_text(size = 12, angle = 270),
+        legend.title.align = 0.5,
+        legend.direction = "vertical", legend.text.position = 'right',
+        legend.title.position = 'right') + annotate("text", x = 13, y=-0.75, label = "lateralized") + annotate("text", x = 13+24, y=-0.75, label = "non-lateralized") + annotate("text", x = -0.75, y=13+24, label = "non-lateralized", angle = 90) + annotate("text", x = -0.75, y=13, label = "lateralized", angle = 90)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_Hamming_distance_between_mazes.pdf', device = "pdf", width= 6, height =5)
+
+```
+
 
 
 ```{r entropy}
