@@ -109,6 +109,7 @@ color_fixation= stim_right_mazes_lat{1,1};
 index_fix_temp=cell2mat(cellfun(@sum, color_fixation, 'UniformOutput', false)) > 0;
 
 color_fixation(index_fix_temp) = {[1 1 1]};
+color_fixationtemp=color_fixation;
 color_fixation= reshape(color_fixation, [1, 11*11]);
 color_fixation= vertcat(color_fixation{:})';
 
@@ -407,8 +408,8 @@ end
 %PRACTICE MATRIX
 %------------------------------------------------------------ 
 
-PracticeTrialSequence=trialMatrix(1:10,:);
-nPracticeTrials=10;
+PracticeTrialSequence=trialMatrix(1:5,:);
+nPracticeTrials=5;
 
 %------------------------------------------------------------
 %PRACTICE MESSAGE
@@ -417,8 +418,8 @@ nPracticeTrials=10;
 WaitSecs(1);
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
 Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','You will now perform 10 practice trials');
-Screen('DrawText',messageWindow,'You will now perform 10 practice trials',centerX-(round(Width(3)/2)), centerY, white);
+Width=Screen(messageWindow,'TextBounds','You will now perform 5 practice trials');
+Screen('DrawText',messageWindow,'You will now perform 5 practice trials',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -464,12 +465,11 @@ for this_practicetrial=1:nPracticeTrials
 %-------------------------------------------------------------------------------------------
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
 %------------------------------------------------------------------------------------------
-
                 %------------------------------------------------------------
                 %Fixation-Cue SOA
                 %------------------------------------------------------------                     
                     
-                FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1000ms and 2000ms   
+                FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1280ms and 2567ms   
                 OffStartSOA = 54;  % period between the offset of the task and the start of the trial
                 
                 colour_stims= maze_array(1,this_practicetrial);
@@ -514,17 +514,17 @@ for this_practicetrial=1:nPracticeTrials
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (177*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (177*IFI) - slack,0);
+                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (180*IFI) - slack,0);
               
                     %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (177*IFI) - slack,0);
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
 
 
                     % get starting position of icon
@@ -592,12 +592,14 @@ for this_practicetrial=1:nPracticeTrials
                     Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
                     Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
                     
-                    colour_stims= maze_array(1,this_practicetrial);
+
+                    colour_stims= color_fixationtemp;
+                    %colour_stims= maze_array{1, this_practicetrial};
                     obstacles=maze_obstacles{1, this_practicetrial};
                     index_obstacle=  obstacles == num2str(numobstacles);
-                    colour_stims{1}(index_obstacle) = {[1,0 0]};
+                    colour_stims(index_obstacle) = {[1,0 0]};
 
-                    colour_stims= reshape(colour_stims{1}', [1, 11*11]);
+                    colour_stims= reshape(colour_stims', [1, 11*11]);
                     colour_stims= vertcat(colour_stims{:})';
 
                     %show Start of response 
@@ -822,17 +824,17 @@ for this_trial=1:nTrials
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (177*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (177*IFI) - slack,0);
+                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (180*IFI) - slack,0);
               
                     %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (177*IFI) - slack,0);
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
 
 
                     % get starting position of icon
@@ -843,7 +845,6 @@ for this_trial=1:nTrials
                      % get position of goal
                     [grow ,gcol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 0], position_self{1,1}, 'UniformOutput', false))) ==3);
                     moves=0;
-
 
                     while 1
 
@@ -902,12 +903,12 @@ for this_trial=1:nTrials
                     Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
                     Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
                     
-                    colour_stims= maze_array(1,this_trial);
+                    colour_stims= color_fixationtemp;
                     obstacles=maze_obstacles{1, this_trial};
                     index_obstacle=  obstacles == num2str(numobstacles);
-                    colour_stims{1}(index_obstacle) = {[1,0 0]};
+                    colour_stims(index_obstacle) = {[1,0 0]};
 
-                    colour_stims= reshape(colour_stims{1}', [1, 11*11]);
+                    colour_stims= reshape(colour_stims', [1, 11*11]);
                     colour_stims= vertcat(colour_stims{:})';
 
                     %show Start of response 
@@ -1018,14 +1019,14 @@ for this_trial=1:nTrials
                     % BLOCK CHECK
                     %------------------------------------------------------------
     
-                    if (itrial < nTrials) && (mod(itrial,64)==0)
+                    if (itrial < nTrials) && (mod(itrial,32)==0)
     
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
                                             Screen(messageWindow,'TextSize',22)
-                                            blockMessage = sprintf('End of Block %d of 18 blocks.',block);
+                                            blockMessage = sprintf('End of Block %d of 36 blocks.',block);
                                             Width1=Screen(messageWindow,'TextBounds',blockMessage);
-                                            Screen('DrawText', messageWindow,blockMessage,centerX-(round(Width1(3)/2)),centerY-100, black);
+                                            Screen('DrawText', messageWindow,blockMessage,centerX-(round(Width1(3)/2)),centerY-100, white);
                                             Width=Screen(messageWindow,'TextBounds','Press Space Bar to Continue');
                                             Screen('DrawText',messageWindow,'Press Space Bar to Continue',centerX-(round(Width(3)/2)),centerY+50, white);
                                             Screen('DrawTexture',mainWin,messageWindow);
@@ -1043,7 +1044,7 @@ for this_trial=1:nTrials
 
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-                                            Screen(messageWindow,'TextSize',11)
+                                            Screen(messageWindow,'TextSize',22)
                                             Width=Screen(messageWindow,'TextBounds','Press Space Bar to Start the Next Block');
                                             Screen('DrawText',messageWindow,'Press Space Bar to Start the Next Block',centerX-(round(Width(3)/2)),centerY-50, white);
                                             Screen('DrawTexture',mainWin,messageWindow);
