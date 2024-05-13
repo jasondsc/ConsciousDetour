@@ -4,7 +4,7 @@ function create_VGC_stims
 
     %% read in mazes from json file and seperate them into workable cell arrays
     % this snippet of code reads in the mazes
-    fileName = '/Users/jason/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_Lateralized.json'; % filename in JSON extension
+    fileName = './mazes/mazes_Lateralized.json'; % filename in JSON extension
     str = fileread(fileName); % dedicated for reading files as text
     data = jsondecode(str); % Using the jsondecode function to parse JSON from string
     data=struct2cell(data);
@@ -29,7 +29,7 @@ function create_VGC_stims
 
 
     % repreat for non-lateralized maze
-    fileName = '/Users/jason/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_Nonlateralized.json'; % filename in JSON extension
+    fileName = './mazes/mazes_Nonlateralized.json'; % filename in JSON extension
     str = fileread(fileName); % dedicated for reading files as text
     data = jsondecode(str); % Using the jsondecode function to parse JSON from string
     data=struct2cell(data);
@@ -91,6 +91,8 @@ function create_VGC_stims
 
     end
     
-    save('./StimMazes_RGB_4_Matlab.mat', 'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat')
+    save('./StimMazes_RGB_4_Matlab.mat', ...
+        'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat',...
+        'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat' )
 
 end

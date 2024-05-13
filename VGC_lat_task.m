@@ -11,7 +11,7 @@ function task_representations
 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
-Screen('Preference', 'SkipSyncTests', 1); 
+%Screen('Preference', 'SkipSyncTests', 1); 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 
@@ -65,6 +65,13 @@ maze_array([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=stim_left_mazes
 maze_array([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=stim_orig_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
 maze_array([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=stim_flipped_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
 
+maze_obstacles= {};
+maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=right_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==1]));
+maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
+maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=orig_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
+maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=flipped_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
+
+
 %------------------------------------------------------------
 %SET UP DISPLAY
 %------------------------------------------------------------
@@ -102,6 +109,9 @@ color_fixation= stim_right_mazes_lat{1,1};
 index_fix_temp=cell2mat(cellfun(@sum, color_fixation, 'UniformOutput', false)) > 0;
 
 color_fixation(index_fix_temp) = {[1 1 1]};
+color_fixation= reshape(color_fixation, [1, 11*11]);
+color_fixation= vertcat(color_fixation{:})';
+
 
 stim_loc=[[centerX-240 centerY-160 centerX-200 centerY-120]; [centerX-200 centerY-160 centerX-160 centerY-120];
 [centerX-160 centerY-160 centerX-120 centerY-120]; [centerX-120 centerY-160 centerX-80 centerY-120];
@@ -172,13 +182,14 @@ stim_loc=[[centerX-240 centerY-160 centerX-200 centerY-120]; [centerX-200 center
 [centerX+40 centerY+240 centerX+80 centerY+280]; [centerX+80 centerY+240 centerX+120 centerY+280]; 
 [centerX+120 centerY+240 centerX+160 centerY+280]; [centerX+160 centerY+240 centerX+200 centerY+280] ];
 
-
+stim_loc(:,2)= stim_loc(:, 2)-60;
+stim_loc(:,4)= stim_loc(:, 4)-60;
 
 %------------------------------------------------------------
 %SET UP KEYBOARD
 %------------------------------------------------------------
 
-KbName('UnifyKeyNames');
+ KbName('UnifyKeyNames');
 KbCheckList = [KbName('space'),KbName('ESCAPE')];
 
 %-------------------------------------------------------
@@ -226,7 +237,7 @@ Screen(messageWindow,'TextSize',22)
 Width=Screen(messageWindow,'TextBounds','VGC behavioural task');
 Screen('DrawText',messageWindow,'VGC behavioural task',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continute');
-Screen('DrawText',messageWindow,'Press the Spacebar to Continute',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press the Spacebar to Continute',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -244,7 +255,7 @@ Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','Please Make Sure That CAPS is OFF');
 Screen('DrawText',messageWindow,'Please Make Sure That CAPS is OFF',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+300, white);
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -259,8 +270,9 @@ WaitSecs(1);
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
 Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','In this task you will be asked to solve a series of mazes');
-Screen('DrawText',messageWindow,'In this task you will be asked to solve a series of mazes',centerX-(round(Width(3)/2)), centerY-250, white);
+Screen('DrawText',messageWindow,'In this task you will be asked to solve a series of mazes',centerX-(round(Width(3)/2)), centerY-300, white);
 Width=Screen(messageWindow,'TextBounds','Here is an example maze:');
+Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(3)/2)), centerY-260, white);
 
 colour_stims= reshape(stim_right_mazes_lat{1}, [1, 11*11]);
 colour_stims= vertcat(colour_stims{:})';
@@ -268,9 +280,8 @@ colour_stims= vertcat(colour_stims{:})';
 Screen('FillRect',messageWindow,colour_stims ,stim_loc');
 Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
 
-Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(3)/2)), centerY-200, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -279,6 +290,34 @@ while 1
     if  keyCode(32)==1 || keyCode(44)==1
         break
     end
+end
+
+
+WaitSecs(1);
+messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+Screen(messageWindow,'TextSize'  , 22)
+Width=Screen(messageWindow,'TextBounds','you will navigate yourself (a red circle) to the goal');
+Screen('DrawText',messageWindow,'you will navigate yourself (a red circle) to the goal',centerX-(round(Width(3)/2)), centerY-360, white);
+Width=Screen(messageWindow,'TextBounds','your character will start at the cyan square');
+Screen('DrawText',messageWindow,'your character will start at the cyan square',centerX-(round(Width(3)/2)), centerY-320, white);
+Width=Screen(messageWindow,'TextBounds','and you will need to make it to the green square');
+Screen('DrawText',messageWindow,'and you will need to make it to the green square',centerX-(round(Width(3)/2)), centerY-280, white);
+
+Screen('FillRect',messageWindow,colour_stims ,stim_loc');
+Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+
+Width=Screen(messageWindow,'TextBounds','BEWARE of obstacles in blue');
+Screen('DrawText',messageWindow,'BEWARE of obstacles in blue',centerX-(round(Width(3)/2)), centerY+300, white);
+Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+Screen('DrawTexture',mainWin,messageWindow);
+Screen('Flip',mainWin)
+
+while 1
+    [keyIsDown,secs,keyCode] = KbCheck; 
+    if  keyCode(32)==1 || keyCode(44)==1
+        break
+    end   
 end
 
 
@@ -296,7 +335,7 @@ Screen('DrawText',messageWindow,'When the maze reappears you can begin to solve 
 Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT index finger');
 Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT index finger',centerX-(round(Width(3)/2)), centerY+100, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -317,8 +356,34 @@ Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle w
 Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-260, white);
 Width=Screen(messageWindow,'TextBounds','You will respond on an 8 point scale like the one below');
 Screen('DrawText',messageWindow,'You will respond on an 8 point scale like the one below',centerX-(round(Width(3)/2)), centerY-220, white);
+
+% draw scale 
+                   scale_pos= [centerX-350, centerY+0; centerX+350, centerY+0; 
+                            centerX-350, centerY-40; centerX-350, centerY+40;
+                            centerX-250, centerY-40; centerX-250, centerY+40;
+                            centerX-150, centerY-40; centerX-150, centerY+40;
+                           centerX-50, centerY-40; centerX-50, centerY+40;
+                           centerX+50, centerY-40; centerX+50, centerY+40;
+                           centerX+150, centerY-40; centerX+150, centerY+40;
+                           centerX+250, centerY-40; centerX+250, centerY+40;
+                           centerX+350, centerY-40; centerX+350, centerY+40]';
+
+Screen('DrawLines',messageWindow,scale_pos, 10, black);
+head   = [ centerX-50, centerY-40 ]; % coordinates of head
+width  = 20;           % width of arrow head
+points = [ head-[width,0]         % left corner
+               head+[width,0]         % right corner
+               head+[0,width] ];      % vertex
+Screen('FillPoly', messageWindow, white, points);
+
+Width=Screen(messageWindow,'TextBounds','unaware');
+Screen('DrawText',messageWindow,'unaware',centerX-450-(round(Width(3)/2)), centerY, white);
+Width=Screen(messageWindow,'TextBounds','aware');
+Screen('DrawText',messageWindow,'aware',centerX+450-(round(Width(3)/2)), centerY, white);
+
+
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -334,13 +399,13 @@ end
 % PRACTICE TRIALS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if practice == 1
+   if practice == 1
     
 %------------------------------------------------------------
 %PRACTICE MATRIX
 %------------------------------------------------------------ 
 
-PracticeTrialSequence=trialMatrix(1:10,        :);
+PracticeTrialSequence=trialMatrix(1:10,:);
 nPracticeTrials=10;
 
 %------------------------------------------------------------
@@ -353,7 +418,7 @@ Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','You will now perform 10 practice trials');
 Screen('DrawText',messageWindow,'You will now perform 10 practice trials',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -365,9 +430,9 @@ while 1
 end
 
 
-WaitSecs(1);
+WaitSecs(1);        
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow, '         TextSize' , 22)
+Screen(messageWindow, 'TextSize' , 22)
 Width=Screen(messageWindow,'TextBounds','Press the spacebar to start practice');
 Screen('DrawText',messageWindow,'Press the spacebar to start practice',centerX-(round(Width(3)/2)), centerY, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -415,7 +480,9 @@ for this_practicetrial=1:nPracticeTrials
                 FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1000ms and 2000ms   
                 OffStartSOA = 54;  % period between the offset of the task and the start of the trial
                 
-                colour_stims= maze_array{1,i};
+                colour_stims= maze_array(1,this_practicetrial);
+                colour_stims= reshape(colour_stims{1}, [1, 11*11]);
+                colour_stims= vertcat(colour_stims{:})';
                 
                 %--------------------------------------------------------------------
                 %STREAM LOOP AND COLLECT RESPONSE
@@ -424,17 +491,19 @@ for this_practicetrial=1:nPracticeTrials
                     %Reset Variables
                     GreyWinTime=0;
                     FixationWinTime=0;
-                    PostFixationWinTime=0;
-                    CueWinTime=0;
-                    PostCueWinTime=0;
-                    TargetWinTime=0;
-                    MaskWinTime=0;
-                    ObjectiveWinTime=0;
-                    SubjectiveWinTime=0;
+                    StimulusWinTime=0;
+                    StimulusOffsetWinTime=0;
+                    ResponseWinTime=0;
+
+                    irow=0;
+                    icol= 0;
+                    grow=0;
+                    gcol=0;
+
                     keyIsDown=0;
                     secs=0;
                     keyCode=[];
-                    Detec_key_pressed=0;
+                    subjreported=0;
                     Subjective_key_pressed=0;
                     
                     % Screen priority
@@ -453,90 +522,159 @@ for this_practicetrial=1:nPracticeTrials
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (177*IFI) - slack,0);
 
-                    %show Fixation
+                    %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
-
-                                        
-                    %show Stimuluas
+                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (177*IFI) - slack,0);
+              
+                    %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (1*IFI) - slack,0);
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (177*IFI) - slack,0);
 
-        
-                    if (PracticeTrialSequence(this_practicetrial,2)==0)
-                        Screen('DrawTexture',mainWin,GreyScreen);
-                elseif (PracticeTrialSequence(this_practicetrial,2)==1)
-                    Screen('DrawTextures', mainWin, [gabortex],[],[xCenter-50 yCenter-50 xCenter+50 yCenter+50],[orientation ] , [], [], [], [],kPsychDontDoRotation, propertiesMat');
-                    end
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    %Screen('Drawtexture',mainWin,TgtWin);
-                    TgtWinTime=Screen('flip',mainWin,MaskOneWinTime + (1*IFI) - slack,0);
-                  
 
-                            %COLLECT RESPONSE FOR DetecRIMINATION REPORT
-                            %-------------------------------------------------                               
-                                while GetSecs - TgtWinTime < (1*IFI) - slack 
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                   KbReleaseWait
-                                   break
-                                   end
-                                end                      
- 
-                    
-                    if Detec_key_pressed == 0              
-                    %show Mask
-                    Screen('Drawtexture',mainWin,MaskWin);
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    MaskTwoWinTime=Screen('Flip',mainWin, TgtWinTime + (1*IFI) - slack,0);  
-                            %COLLECT RESPONSE FOR Detec REPORT
-                            %-------------------------------------------------                               
-                                while 1
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                   KbReleaseWait
-                                   break
-                                   end
-                                end 
-                    end
-                    if Detec_key_pressed == 0  
-                    %Show Post mask
-                    Screen('Drawtexture',mainWin,MaskWin); 
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PostMaskOneWinTime=Screen('Flip',mainWin, MaskTwoWinTime + (1*IFI) - slack,0);   
+                    % get starting position of icon
+                    position_self= maze_array(1,this_practicetrial);
+                    [irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
 
-                    
-                            %COLLECT RESPONSE FOR Detec REPORT
-                            %-------------------------------------------------                               
-                                while 1
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                   KbReleaseWait
-                                   break
-                                   end
-                                end  
-                    
+                    % get position of goal
+                    [grow ,gcol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 0], position_self{1,1}, 'UniformOutput', false))) ==3);
+
+                    while 1
+
+                        % update position of icon if participant moved
+                             [keyIsDown,secs,keyCode]=KbCheck;
+
+                             if keyIsDown==1
+                                 keyCode= find(keyCode==1)(1);
+
+                                 if keyCode == 37 &&  irow-1 > 0  &&  irow-1 < 12 &&  sum(position_self{1}{ irow-1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow-1, icol} == [0 0 0]) ~=3
+                                     irow= irow-1;
+
+                                 elseif keyCode == 40 &&  icol+1 > 0 &&  icol+1 < 12 &&  sum(position_self{1}{ irow, icol+1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol+1} == [0 0 0]) ~=3
+                                     icol= icol+1;
+
+                                 elseif keyCode == 39 &&  irow+1 > 0 &&  irow+1 < 12 &&  sum(position_self{1}{ irow+1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow+1, icol} == [0 0 0]) ~=3
+                                      irow= irow+1;
+
+                                 elseif keyCode == 38 &&  icol-1 > 0 &&  icol-1 < 12 &&  sum(position_self{1}{ irow, icol-1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol-1} == [0 0 0]) ~=3
+                                      icol= icol-1;
+                                 end
+                                 KbReleaseWait;
+                             end
+
+                             self_pos=  stim_loc(11*(icol-1) + irow, :);
+
+
+                        %show Start of response 
+                        Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                        % add circle 
+                        Screen('DrawDots', mainWin, [self_pos(1) + 20, self_pos(2) + 20], 20, [1 0 0 ], [], 2)
+                        Screen('flip',mainWin,ResponseWinTime + (1*IFI) - slack,0);
+
+                        % break loop if solved
+                        if irow == grow && icol == gcol
+                            % add code here to get RT
+                            mazeRT= GetSecs - ResponseWinTime;
+                            break;
+                        end
+
                     end
-                    KbReleaseWait  
+
+                    % ask about subjective report now
+
+                    for numobstacles =0:5 % index off bc of python
+                    subjpos=randi([1 8], 1); % start at random position
+
+                     % draw scale 
+                     Screen(mainWin, 'TextSize' , 22)
+                    Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
+                    Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
                     
+                    colour_stims= maze_array(1,this_practicetrial);
+                    obstacles=maze_obstacles{1, this_practicetrial};
+                    index_obstacle=  obstacles == num2str(numobstacles);
+                    colour_stims{1}(index_obstacle) = {[1,0 0]};
+
+                    colour_stims= reshape(colour_stims{1}, [1, 11*11]);
+                    colour_stims= vertcat(colour_stims{:})';
+
+                    %show Start of response 
+                    Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    
+                   scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
+                            centerX-350, centerY+270-30; centerX-350, centerY+270+30;
+                            centerX-250, centerY+270-30; centerX-250, centerY+270+30;
+                            centerX-150, centerY+270-30; centerX-150, centerY+270+30;
+                           centerX-50, centerY+270-30; centerX-50, centerY+270+30;
+                           centerX+50, centerY+270-30; centerX+50, centerY+270+30;
+                           centerX+150, centerY+270-30; centerX+150, centerY+270+30;
+                           centerX+250, centerY+270-30; centerX+250, centerY+270+30;
+                           centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
+                        
+                        Screen('DrawLines',mainWin,scale_pos, 10, black);
+                        head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
+                        width  = 20;           % width of arrow head
+                        points = [ head-[width,0]         % left corner
+                                       head+[width,0]         % right corner
+                                       head+[0,width] ];      % vertex
+                        Screen('FillPoly', mainWin, white, points);
+                        
+                        Width=Screen(mainWin,'TextBounds','unaware');
+                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','aware');
+                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                        SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+
+                        subjreported=1;
+                        KbReleaseWait;
+
+                    while subjreported
+                           [keyIsDown,secs,keyCode]=KbCheck;
+                             if keyIsDown==1
+                                 keyCode= find(keyCode==1)(1);
+                                 if keyCode == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                     subjpos= subjpos-1;
+                                 elseif keyCode == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                      subjpos= subjpos+1;
+                                 elseif  keyCode == 32 
+                                     subjreported=0;
+                                 end
+                             end
+
+                    % draw scale 
+                        Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
+                        Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
+                        
+                         %show Start of response 
+                        Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+
+                        Screen('DrawLines',mainWin,scale_pos, 10, black);
+                        head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
+                        width  = 20;           % width of arrow head
+                        points = [ head-[width,0]         % left corner
+                                       head+[width,0]         % right corner
+                                       head+[0,width] ];      % vertex
+                        Screen('FillPoly', mainWin, white, points);
+                        
+                        Width=Screen(mainWin,'TextBounds','unaware');
+                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
+                        Width=Screen(mainWin,'TextBounds','aware');
+                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                        SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
+                        WaitSecs(0.1);
+                    end
+                    end
+
                     %show Black Screen
                     Screen('DrawTexture',mainWin,GreyScreen);
                     GreyWinTime=Screen('flip',mainWin,0);
@@ -558,7 +696,7 @@ Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','Practice is completed');
 Screen('DrawText',messageWindow,'Practice is completed',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -582,11 +720,11 @@ end
 
 WaitSecs(1);
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize',11)
+Screen(messageWindow,'TextSize',22)
 Width=Screen(messageWindow,'TextBounds','You will now perform the task');
 Screen('DrawText',messageWindow,'You will now perform the task',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+300, white);
+Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), CenterY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -601,7 +739,7 @@ end
 
 WaitSecs(1);
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize',11)
+Screen(messageWindow,'TextSize',22)
 Width=Screen(messageWindow,'TextBounds','Press Space Bar to Begin Task');
 Screen('DrawText',messageWindow,'Press Space Bar to Begin Task',centerX-(round(Width(3)/2)), centerY, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -619,19 +757,6 @@ end
 %------------------------------------------------------------    
 
 block = 1;
-
-%------------------------------------------------------------
-% Set up Quest
-%------------------------------------------------------------
-contrast=0.5;
-tGuess = .10;
-tGuessSd = 0.3;
-pThreshold = 0.75;
-beta = 3;
-delta = 0.01;
-gamma = 0.01;
-
-Q_block=QuestCreate(tGuess,tGuessSd,pThreshold,beta,delta,gamma);
 
 %------------------------------------------------------------
 %TRIALS SETUP
