@@ -90,9 +90,18 @@ function create_VGC_stims
         stim_flipped_mazes_nonlat{i,1} = tempint;
 
     end
+
+
+    stats=readtable('./mazes/new_mazes_stats.csv');
+
+    sVGC_right_mazes_lat= reshape([stats.sVGC(1:144); stats.sVGC(1:144)]', [6,48]);
+    sVGC_orig_mazes_nonlat= reshape([stats.sVGC(145:end); stats.sVGC(145:end)]', [6,48]);
+    dVGC_right_mazes_lat= reshape([stats.dVGC(1:144); stats.dVGC(1:144)]', [6,48]);
+    dVGC_orig_mazes_nonlat=  reshape([stats.dVGC(145:end); stats.dVGC(145:end)]', [6,48]);
     
     save('./StimMazes_RGB_4_Matlab.mat', ...
         'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat',...
-        'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat' )
+        'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat', ...
+        'dVGC_orig_mazes_nonlat',"dVGC_right_mazes_lat" , 'sVGC_orig_mazes_nonlat', 'sVGC_right_mazes_lat')
 
 end

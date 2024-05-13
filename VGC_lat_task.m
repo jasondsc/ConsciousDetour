@@ -100,7 +100,7 @@ centerY = round(r(4)/2);
 Screen(mainWin,'TextSize',14);
 Screen(mainWin,'TextFont','Arial');
 Screen(mainWin,'FillRect',grey);
-Screen('Flip', mainWin    );
+Screen('Flip', mainWin );
 
 
 % set up locations of squares and fixation
@@ -196,21 +196,23 @@ KbCheckList = [KbName('space'),KbName('ESCAPE')];
 %OPEN THE OUTPUT FILE AND GIVE IT HEADINGS 
 %-------------------------------------------------------
 
-fname = [subjectID,'.txt'];
+fname = [subjectID,'.csv'];
 fid = fopen(fname,'a');   
-fprintf(fid,'%-16.16s\t','Subject Code');
-fprintf(fid,'%-16.16s\t','Gender');
-fprintf(fid,'%-16.16s\t','Age');
-fprintf(fid,'%-16.16s\t','Experiment');
-fprintf(fid,'%-16.16s\t','Handiness');
-fprintf(fid,'%-16.16s\t','Trial.Number');
-fprintf(fid,'%-16.16s\t','MazeName');
-fprintf(fid,'%-16.16s\t','MazeID');
-fprintf(fid,'%-16.16s\t','Lateralized');
-fprintf(fid,'%-16.16s\t','Sie');
-fprintf(fid,'%-16.16s\t','Solution.RT');                                     
-fprintf(fid,'%-16.16s\t','Awareness.ReportObs1'); 
-fprintf(fid,'%-16.16s\t','Awareness.ReportObs2');  
+fprintf(fid,'%-16.16s,','Subject Code');
+fprintf(fid,'%-16.16s,','Gender');
+fprintf(fid,'%-16.16s,','Age');
+fprintf(fid,'%-16.16s,','Experiment');
+fprintf(fid,'%-16.16s,','Handiness');
+fprintf(fid,'%-16.16s,','Trial.Number');
+fprintf(fid,'%-16.16s,','MazeID');
+fprintf(fid,'%-16.16s,','Lateralized');
+fprintf(fid,'%-16.16s,','Side');
+fprintf(fid,'%-16.16s,','Moves');
+fprintf(fid,'%-16.16s,','Solution.RT');
+fprintf(fid,'%-16.16s,','Obs.No');                                
+fprintf(fid,'%-16.16s,','sVGC.Obs'); 
+fprintf(fid,'%-16.16s,','dVGC.Obs'); 
+fprintf(fid,'%-16.16s,\n','Aware.ReportObs');  
 
 %------------------------------------------------------------
 %ALLTRIALS
@@ -274,7 +276,7 @@ Screen('DrawText',messageWindow,'In this task you will be asked to solve a serie
 Width=Screen(messageWindow,'TextBounds','Here is an example maze:');
 Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(3)/2)), centerY-260, white);
 
-colour_stims= reshape(stim_right_mazes_lat{1}, [1, 11*11]);
+colour_stims= reshape(stim_right_mazes_lat{1}', [1, 11*11]);
 colour_stims= vertcat(colour_stims{:})';
 
 Screen('FillRect',messageWindow,colour_stims ,stim_loc');
@@ -399,7 +401,7 @@ end
 % PRACTICE TRIALS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   if practice == 1
+ if practice == 1
     
 %------------------------------------------------------------
 %PRACTICE MATRIX
@@ -458,16 +460,6 @@ for this_practicetrial=1:nPracticeTrials
 
     %taskwindows
     GreyScreen=Screen('OpenOffscreenWindow',mainWin,grey);
-    FixationWin=Screen('openoffScreenwindow',mainWin,grey); 
-    PostFixationWin=Screen('openoffScreenwindow',mainWin,grey); 
-    CueWin=Screen('openoffScreenwindow',mainWin,grey); 
-    PostCueWin=Screen('openoffScreenwindow',mainWin,grey);
-    TgtWin=Screen('openoffScreenwindow',mainWin,grey);
-    PostTgtWin=Screen('openoffScreenwindow',mainWin,grey);
-    MaskWin=Screen('openoffScreenwindow',mainWin,grey);
-    PostmaskWin=Screen('openoffScreenwindow',mainWin,grey);
-    GreyScreenWin=Screen('openoffScreenwindow',mainWin,grey);
-    SubjectiveWin=Screen('OpenOffscreenWindow',mainWin,grey); 
 
 %-------------------------------------------------------------------------------------------
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
@@ -481,7 +473,7 @@ for this_practicetrial=1:nPracticeTrials
                 OffStartSOA = 54;  % period between the offset of the task and the start of the trial
                 
                 colour_stims= maze_array(1,this_practicetrial);
-                colour_stims= reshape(colour_stims{1}, [1, 11*11]);
+                colour_stims= reshape(colour_stims{1}', [1, 11*11]);
                 colour_stims= vertcat(colour_stims{:})';
                 
                 %--------------------------------------------------------------------
@@ -537,10 +529,12 @@ for this_practicetrial=1:nPracticeTrials
 
                     % get starting position of icon
                     position_self= maze_array(1,this_practicetrial);
+                    position_self{1,1}= position_self{1,1}';
                     [irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
 
-                    % get position of goal
+                                       % get position of goal
                     [grow ,gcol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 0], position_self{1,1}, 'UniformOutput', false))) ==3);
+                    moves=0;
 
                     while 1
 
@@ -548,23 +542,26 @@ for this_practicetrial=1:nPracticeTrials
                              [keyIsDown,secs,keyCode]=KbCheck;
 
                              if keyIsDown==1
-                                 keyCode= find(keyCode==1)(1);
+                                 keyCode= find(keyCode==1);
 
-                                 if keyCode == 37 &&  irow-1 > 0  &&  irow-1 < 12 &&  sum(position_self{1}{ irow-1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow-1, icol} == [0 0 0]) ~=3
+                                 if keyCode(1) == 37 &&  irow-1 > 0  &&  irow-1 < 12 &&  sum(position_self{1}{ irow-1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow-1, icol} == [0 0 0]) ~=3
                                      irow= irow-1;
+                                     moves=moves+1;
 
-                                 elseif keyCode == 40 &&  icol+1 > 0 &&  icol+1 < 12 &&  sum(position_self{1}{ irow, icol+1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol+1} == [0 0 0]) ~=3
+                                 elseif keyCode(1) == 40 &&  icol+1 > 0 &&  icol+1 < 12 &&  sum(position_self{1}{ irow, icol+1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol+1} == [0 0 0]) ~=3
                                      icol= icol+1;
+                                     moves=moves+1;
 
-                                 elseif keyCode == 39 &&  irow+1 > 0 &&  irow+1 < 12 &&  sum(position_self{1}{ irow+1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow+1, icol} == [0 0 0]) ~=3
+                                 elseif keyCode(1) == 39 &&  irow+1 > 0 &&  irow+1 < 12 &&  sum(position_self{1}{ irow+1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow+1, icol} == [0 0 0]) ~=3
                                       irow= irow+1;
+                                      moves=moves+1;
 
-                                 elseif keyCode == 38 &&  icol-1 > 0 &&  icol-1 < 12 &&  sum(position_self{1}{ irow, icol-1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol-1} == [0 0 0]) ~=3
+                                 elseif keyCode(1) == 38 &&  icol-1 > 0 &&  icol-1 < 12 &&  sum(position_self{1}{ irow, icol-1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol-1} == [0 0 0]) ~=3
                                       icol= icol-1;
+                                      moves=moves+1;
                                  end
                                  KbReleaseWait;
                              end
-
                              self_pos=  stim_loc(11*(icol-1) + irow, :);
 
 
@@ -585,12 +582,13 @@ for this_practicetrial=1:nPracticeTrials
                     end
 
                     % ask about subjective report now
+                    WaitSecs(0.3);
 
                     for numobstacles =0:5 % index off bc of python
                     subjpos=randi([1 8], 1); % start at random position
 
                      % draw scale 
-                     Screen(mainWin, 'TextSize' , 22)
+                    Screen(mainWin, 'TextSize' , 22)
                     Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
                     Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
                     
@@ -599,7 +597,7 @@ for this_practicetrial=1:nPracticeTrials
                     index_obstacle=  obstacles == num2str(numobstacles);
                     colour_stims{1}(index_obstacle) = {[1,0 0]};
 
-                    colour_stims= reshape(colour_stims{1}, [1, 11*11]);
+                    colour_stims= reshape(colour_stims{1}', [1, 11*11]);
                     colour_stims= vertcat(colour_stims{:})';
 
                     %show Start of response 
@@ -638,12 +636,12 @@ for this_practicetrial=1:nPracticeTrials
                     while subjreported
                            [keyIsDown,secs,keyCode]=KbCheck;
                              if keyIsDown==1
-                                 keyCode= find(keyCode==1)(1);
-                                 if keyCode == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                 keyCode= find(keyCode==1);
+                                 if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
                                      subjpos= subjpos-1;
-                                 elseif keyCode == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                 elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
                                       subjpos= subjpos+1;
-                                 elseif  keyCode == 32 
+                                 elseif  keyCode(1) == 32 
                                      subjreported=0;
                                  end
                              end
@@ -724,7 +722,7 @@ Screen(messageWindow,'TextSize',22)
 Width=Screen(messageWindow,'TextBounds','You will now perform the task');
 Screen('DrawText',messageWindow,'You will now perform the task',centerX-(round(Width(3)/2)), centerY, white);
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), CenterY+350, white);
+Screen('DrawText',messageWindow,'Press the Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -764,357 +762,233 @@ block = 1;
 
 for this_trial=1:nTrials
         
-
 %------------------------------------------------------------
 %DISPLAY SETUP
 %------------------------------------------------------------
 
-%taskwindows
-GreyScreen=Screen('OpenOffscreenWindow',mainWin,grey);
-FixationWin=Screen('openoffScreenwindow',mainWin,grey); 
-PostFixationWin=Screen('openoffScreenwindow',mainWin,grey); 
-CueWin=Screen('openoffScreenwindow',mainWin,grey); 
-PostCueWin=Screen('openoffScreenwindow',mainWin,grey);
-TgtWin=Screen('openoffScreenwindow',mainWin,grey);
-PostTgtWin=Screen('openoffScreenwindow',mainWin,grey);
-MaskWin=Screen('openoffScreenwindow',mainWin,grey);
-Postmaskwin=Screen('openoffScreenwindow',mainWin,grey);
-SubjectiveWin=Screen('OpenOffscreenWindow',mainWin,grey); 
-
-%------------------------------------------------------------
-%VARIABLES RESETTING
-%------------------------------------------------------------
-
-Detec_RT=0;
-Detec_key_expected=0;
-Detec_key_pressed=0;
-Detec_Accuracy=0;
-
+    %taskwindows
+    GreyScreen=Screen('OpenOffscreenWindow',mainWin,grey);
 
 %-------------------------------------------------------------------------------------------
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
 %------------------------------------------------------------------------------------------
-                 
-                    % Load cue
-               if (AllTrialSequence(this_trial,1)==0)             
 
-                    CuePresent = 0;
-                    CueCode = 002;
-                                        
-           elseif (AllTrialSequence(this_trial,1)==1)             
-                    
-                    CuePresent = 1;
-                    CueCode = 003; 
-
-               end     
-                                        
-                    
-                if (AllTrialSequence(this_trial,2)==0)
-                    
-                    TargetCode = 004;
-
-
-            elseif (AllTrialSequence(this_trial,2)==1)
-
-                    TargetCode = 005;
-
-
-            elseif (AllTrialSequence(this_trial,2)==2)
-
-                    TargetCode = 006;
-
-               end
-
-                    % Mask
-                    Mask_img = imread('mask','jpg');
-                    MaskWin=Screen('MakeTexture',mainWin,Mask_img);  
-                    MaskCode=15;
-                    
                 %------------------------------------------------------------
                 %Fixation-Cue SOA
                 %------------------------------------------------------------                     
                     
-                FixTargetSOA = round((154 - 77)*rand(1,1) + 77); %random between 1000ms and 2000ms   
-                FixCueSOA = FixTargetSOA - 54;   
+                FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1000ms and 2000ms   
+                OffStartSOA = 54;  % period between the offset of the task and the start of the trial
                 
-                %------------------------------------------------------------
-                %Mask Latencies 
-                %------------------------------------------------------------                     
-                        
-                MaskLantecy = 6;
-
+                colour_stims= maze_array(1,this_trial);
+                colour_stims= reshape(colour_stims{1}', [1, 11*11]);
+                colour_stims= vertcat(colour_stims{:})';
                 
-                %------------------------------------------------------------
-                %Contrast
-                %------------------------------------------------------------    
-                
-                contrast= QuestQuantile(Q_block);
-                
-                if contrast <0.02
-                    contrast = 0.02;
-                elseif contrast > 0.9
-                    contrast = 0.9;
-                end
-                
-                %------------------------------------------------------------
-                %Target & Key Info Info
-                %------------------------------------------------------------                 
-                
-                TargetType = (AllTrialSequence(this_trial,2));
-                
-                    if Counterbalancing == 1 && TargetType ==1
-                        Detec_key_expected = 70;
-                elseif Counterbalancing == 1 && TargetType ==0
-                        Detec_key_expected = 74;
-                elseif Counterbalancing == 2 && TargetType ==1
-                        Detec_key_expected = 74;
-                elseif Counterbalancing == 2 && TargetType ==0
-                        Detec_key_expected = 70;
-                   end
-
                 %--------------------------------------------------------------------
                 %STREAM LOOP AND COLLECT RESPONSE
                 %--------------------------------------------------------------------                        
                     
                     %Reset Variables
-                    greyWinTime=0;
+                    GreyWinTime=0;
                     FixationWinTime=0;
-                    CueWinTime=0;
-                    TgtWinTime=0;
-                    MaskWinTime=0;
-                    PostmaskWinTime=0;
-                    SubjectiveWinTime=0;
+                    StimulusWinTime=0;
+                    StimulusOffsetWinTime=0;
+                    ResponseWinTime=0;
+
+                    irow=0;
+                    icol= 0;
+                    grow=0;
+                    gcol=0;
+
                     keyIsDown=0;
                     secs=0;
                     keyCode=[];
-                    Detec_key_pressed=0;
-                    KeyDown = 0;
-                    Subjective_key_pressed=0;
+                    subjectivereports=[];
+                    mazeRT=0;
                     
-                     % Screen priority
-                     Priority(MaxPriority(mainWin));
-                     Priority(2);
-
-                     %show grey Screen,
-                     Screen('DrawTexture',mainWin,GreyScreen);
-                     GreyWinTime=Screen('flip',mainWin);
+                    % Screen priority
+                    Priority(MaxPriority(mainWin));
+                    Priority(2);
                      
-                    %show Fixation
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    FixationWinTime=Screen('flip',mainWin,GreyWinTime + (77*IFI) - slack,0); 
-                     outp(address, 001)
-                     WaitSecs(0.004)
-                     outp(address, 0)
-                     
-                    %show PostFixation
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('flip',mainWin,FixationWinTime + (1*IFI) - slack,0);
-
-                    %show Cue (Flash Fixation)
-                    if ((AllTrialSequence(this_trial,1)==0))
-                        
-                        Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                        Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    elseif ((AllTrialSequence(this_trial,1)==1))
-                        Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                        Screen('FrameOval', mainWin, black, [xCenter-63 yCenter-63 xCenter+63 yCenter+63], 20, [], []);
-                    end
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    CueWinTime=Screen('flip',mainWin,FixationWinTime + (FixCueSOA*IFI) - slack,0);
-                    outp(address, CueCode)
-                    WaitSecs(0.004)
-                    outp(address, 0) 
-
-                    %show Post Cue
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PostCueWinTime=Screen('flip',mainWin,CueWinTime + (12*IFI) - slack,0); 
-                    
-                    % Show mask
-                    Screen('Drawtexture',mainWin,MaskWin); 
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    MaskOneWinTime=Screen('Flip',mainWin, PostCueWinTime + (54*IFI) - slack,0);
-                    outp(address, 14)
-                    WaitSecs(0.004)
-                    outp(address, 0)
-                    
-                    %Show Post mask
-                    Screen('Drawtexture',mainWin,MaskWin); 
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PostMaskOneWinTime=Screen('Flip',mainWin, MaskOneWinTime + (1*IFI) - slack,0);   
-
-                    %Pretarget
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PreTargetWinTime=Screen('flip',mainWin,MaskOneWinTime + (MaskLantecy*IFI) - slack,0); 
-                
-                    
-                    %show Target                
-                   if ((AllTrialSequence(this_trial,3)==1))
-                            orientation = 15;
-                   elseif ((AllTrialSequence(this_trial,3)==2))
-                            orientation = -15;
-                    end
-                    gaborDimPix = 72 ;
-                    sigma = gaborDimPix / 6 ;
-                    aspectRatio = 1.0;
-                    phase = .1;
-                    numCycles = 3;
-                    freq = numCycles / gaborDimPix;
-                    backgroundOffset = [0.5 0.5 0.5 0];
-                    disableNorm = 1;
-                    preContrastMultiplier = 0.5;
-                    gabortex = CreateProceduralGabor(mainWin, gaborDimPix, gaborDimPix, [],backgroundOffset, disableNorm, preContrastMultiplier);
-                    propertiesMat = [phase, freq, sigma, contrast, aspectRatio, 0, 0, 0];
-                    if ((AllTrialSequence(this_trial,2)==0))
-                        Screen('DrawTexture',mainWin,GreyScreen);
-                elseif ((AllTrialSequence(this_trial,2)==1))
-                    Screen('DrawTextures', mainWin, [gabortex],[],[xCenter-50 yCenter-50 xCenter+50 yCenter+50],[orientation ] , [], [], [], [],kPsychDontDoRotation, propertiesMat');
-                    end
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    %Screen('Drawtexture',mainWin,TgtWin);
-                    TgtWinTime=Screen('flip',mainWin,PreTargetWinTime + (MaskLantecy*IFI) - slack,0);
-                    outp(address, TargetCode)
-                    WaitSecs(0.004)
-                    outp(address, 0)                  
-
-                            %COLLECT RESPONSE FOR DetecRIMINATION REPORT
-                            %-------------------------------------------------                               
-                                while GetSecs - TgtWinTime < (1*IFI) - slack 
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                            if  Detec_key_expected == Detec_key_pressed
-                                                        Detec_Accuracy=1;
-                                                        outp(address, 032)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)
-                                            else   
-                                                        Detec_Accuracy=0;
-                                                        outp(address, 064)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)                                                
-                                            end
-                                   break
-                                   end
-                                end                      
-  
-                    if Detec_key_pressed == 0                                                  
-                    %show PostTarget
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PostTgtWinTime=Screen('flip',mainWin,TgtWinTime + (1*IFI) - slack,0); 
-                   
-                            %COLLECT RESPONSE FOR DetecRIMINATION REPORT
-                            %-------------------------------------------------                               
-                                while GetSecs - PostTgtWinTime < (1*IFI) - slack 
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                            if  Detec_key_expected == Detec_key_pressed
-                                                        Detec_Accuracy=1;
-                                                        outp(address, 032)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)
-                                            else   
-                                                        Detec_Accuracy=0;
-                                                        outp(address, 064)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)                                                
-                                            end
-                                   break
-                                   end
-                                end      
-                    end
-                    
-                    if Detec_key_pressed == 0              
-                    %show Mask
-                    Screen('Drawtexture',mainWin,MaskWin);
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    Screen('FillRect',mainWin,black,[45 743 55 753]);
-                    MaskTwoWinTime=Screen('Flip',mainWin, PostTgtWinTime + (MaskLantecy*IFI) - slack,0); 
-                    outp(address, 15)
-                    WaitSecs(0.004)
-                    outp(address, 0)
-                            %COLLECT RESPONSE FOR Detec REPORT
-                            %-------------------------------------------------                               
-                                while 1
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                            if  Detec_key_expected == Detec_key_pressed
-                                                        Detec_Accuracy=1;
-                                                        outp(address, 032)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)
-                                            else   
-                                                        Detec_Accuracy=0;
-                                                        outp(address, 064)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)                                                
-                                            end
-                                   break
-                                   end
-                                end 
-                    end
-                    if Detec_key_pressed == 0  
-                    %Show Post mask
-                    Screen('Drawtexture',mainWin,MaskWin); 
-                    Screen('DrawDots', mainWin, [xCenter yCenter], 15, [0 0 0], [], 2);
-                    Screen('FrameOval', mainWin, black, [xCenter-53 yCenter-53 xCenter+53 yCenter+53], 5, [], []);
-                    PostMaskOneWinTime=Screen('Flip',mainWin, MaskTwoWinTime + (1*IFI) - slack,0);   
-
-                    
-                            %COLLECT RESPONSE FOR Detec REPORT
-                            %-------------------------------------------------                               
-                                while 1
-                                   [keyIsDown,secs,keyCode]=KbCheck;
-                                   if keyIsDown==1
-                                   Detec_RT=GetSecs-TgtWinTime;
-                                   Detec_key_pressed=find(keyCode==1);
-                                   KeyDown=GetSecs;
-                                            if  Detec_key_expected == Detec_key_pressed
-                                                        Detec_Accuracy=1;
-                                                        outp(address, 032)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)
-                                            else   
-                                                        Detec_Accuracy=0;
-                                                        outp(address, 064)
-                                                        WaitSecs(0.004)
-                                                        outp(address, 0)                                                
-                                            end
-                                   break
-                                   end
-                                end  
-                    
-                    end
-                    KbReleaseWait   
+                    %show grey Screen, 
                     Screen('DrawTexture',mainWin,GreyScreen);
-                    greyWinTime=Screen('flip',mainWin,0);
+                    GreyWinTime=Screen('flip',mainWin);
+
+                    %show Fixation
+                    Screen('FillRect',mainWin,color_fixation ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    FixationWinTime=Screen('flip',mainWin,GreyWinTime + (FixOffSOA*IFI) - slack,0); 
                     
-                    %COLLECT RESPONSE FOR SUBJECTIVE REPORT
-                    %-------------------------------------------------                    
-                    %show Subjective                
-                    Screen('DrawTexture',mainWin,SubjectiveWin);
-                    Screen('flip',mainWin,greyWinTime + (1*IFI),0); 
-                         
-                 
+                    %show Stimuluas
+                    Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (177*IFI) - slack,0);
+
+                    %show Delay period
+                    Screen('FillRect',mainWin,color_fixation ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (177*IFI) - slack,0);
+              
+                    %show Start of response 
+                    Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (177*IFI) - slack,0);
+
+
+                    % get starting position of icon
+                    position_self= maze_array(1,this_trial);
+                    position_self{1,1}= position_self{1,1}';
+                    [irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
+
+                     % get position of goal
+                    [grow ,gcol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 0], position_self{1,1}, 'UniformOutput', false))) ==3);
+                    moves=0;
+
+
+                    while 1
+
+                        % update position of icon if participant moved
+                             [keyIsDown,secs,keyCode]=KbCheck;
+
+                             if keyIsDown==1
+                                 keyCode= find(keyCode==1);
+
+                                 if keyCode(1) == 37 &&  irow-1 > 0  &&  irow-1 < 12 &&  sum(position_self{1}{ irow-1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow-1, icol} == [0 0 0]) ~=3
+                                     irow= irow-1;
+                                     moves=moves+1;
+
+                                 elseif keyCode(1) == 40 &&  icol+1 > 0 &&  icol+1 < 12 &&  sum(position_self{1}{ irow, icol+1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol+1} == [0 0 0]) ~=3
+                                     icol= icol+1;
+                                     moves=moves+1;
+
+                                 elseif keyCode(1) == 39 &&  irow+1 > 0 &&  irow+1 < 12 &&  sum(position_self{1}{ irow+1, icol} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow+1, icol} == [0 0 0]) ~=3
+                                      irow= irow+1;
+                                      moves=moves+1;
+
+                                 elseif keyCode(1) == 38 &&  icol-1 > 0 &&  icol-1 < 12 &&  sum(position_self{1}{ irow, icol-1} == [0 0 1]) ~=3 &&  sum(position_self{1}{ irow, icol-1} == [0 0 0]) ~=3
+                                      icol= icol-1;
+                                      moves=moves+1;
+                                 end
+                                 KbReleaseWait;
+                             end
+
+                             self_pos=  stim_loc(11*(icol-1) + irow, :);
+
+
+                        %show Start of response 
+                        Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                        % add circle 
+                        Screen('DrawDots', mainWin, [self_pos(1) + 20, self_pos(2) + 20], 20, [1 0 0 ], [], 2)
+                        Screen('flip',mainWin,ResponseWinTime + (1*IFI) - slack,0);
+
+                        % break loop if solved
+                        if irow == grow && icol == gcol
+                            % add code here to get RT
+                            mazeRT= GetSecs - ResponseWinTime;
+                            break;
+                        end
+
+                    end
+
+                    % ask about subjective report now
+                    WaitSecs(0.3);
+
+                    for numobstacles =0:5 % index off bc of python
+                    subjpos=randi([1 8], 1); % start at random position
+
+                     % draw scale 
+                    Screen(mainWin, 'TextSize' , 22)
+                    Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
+                    Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
+                    
+                    colour_stims= maze_array(1,this_trial);
+                    obstacles=maze_obstacles{1, this_trial};
+                    index_obstacle=  obstacles == num2str(numobstacles);
+                    colour_stims{1}(index_obstacle) = {[1,0 0]};
+
+                    colour_stims= reshape(colour_stims{1}', [1, 11*11]);
+                    colour_stims= vertcat(colour_stims{:})';
+
+                    %show Start of response 
+                    Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    
+                   scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
+                            centerX-350, centerY+270-30; centerX-350, centerY+270+30;
+                            centerX-250, centerY+270-30; centerX-250, centerY+270+30;
+                            centerX-150, centerY+270-30; centerX-150, centerY+270+30;
+                           centerX-50, centerY+270-30; centerX-50, centerY+270+30;
+                           centerX+50, centerY+270-30; centerX+50, centerY+270+30;
+                           centerX+150, centerY+270-30; centerX+150, centerY+270+30;
+                           centerX+250, centerY+270-30; centerX+250, centerY+270+30;
+                           centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
+                        
+                        Screen('DrawLines',mainWin,scale_pos, 10, black);
+                        head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
+                        width  = 20;           % width of arrow head
+                        points = [ head-[width,0]         % left corner
+                                       head+[width,0]         % right corner
+                                       head+[0,width] ];      % vertex
+                        Screen('FillPoly', mainWin, white, points);
+                        
+                        Width=Screen(mainWin,'TextBounds','unaware');
+                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','aware');
+                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                        SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+
+                        subjreported=1;
+                        KbReleaseWait;
+
+                    while subjreported
+                           [keyIsDown,secs,keyCode]=KbCheck;
+                            if keyIsDown==1
+                                 keyCode= find(keyCode==1);
+                                 if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                     subjpos= subjpos-1;
+                                 elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                      subjpos= subjpos+1;
+                                 elseif  keyCode(1) == 32 
+                                     subjreported=0;
+                                 end
+                                 KbReleaseWait;
+                             end
+
+                    % draw scale 
+                        Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
+                        Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
+                        
+                         %show Start of response 
+                        Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+
+                        Screen('DrawLines',mainWin,scale_pos, 10, black);
+                        head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
+                        width  = 20;           % width of arrow head
+                        points = [ head-[width,0]         % left corner
+                                       head+[width,0]         % right corner
+                                       head+[0,width] ];      % vertex
+                        Screen('FillPoly', mainWin, white, points);
+                        
+                        Width=Screen(mainWin,'TextBounds','unaware');
+                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
+                        Width=Screen(mainWin,'TextBounds','aware');
+                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                        SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
+                        WaitSecs(0.01);
+                    end
+                        subjectivereports(numobstacles+1) = subjpos;
+                    end
+
+                    %show Black Screen
+                    Screen('DrawTexture',mainWin,GreyScreen);
+                    GreyWinTime=Screen('flip',mainWin,0);
+                   
                     %END STREAM LOOP
                     %---------------
                     % AlLow other processes to run optimally
@@ -1124,29 +998,32 @@ Detec_Accuracy=0;
                     %DEFINE FORMAT AND PRINT OUTPUT
                     %--------------------------------------------------------
     
-                    format = '%s\t %s\t %f\t %s\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n'; %19
+                    format = '%s, %s, %f, %s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\n'; %19
 
-                    fprintf(fid,format,subjectID,Gender,Age,experiment,Counterbalancing,handiness,itrial,CuePresent,FixTargetSOA,54,MaskLantecy,contrast,TargetType,orientation,Detec_RT,Detec_key_expected,Detec_key_pressed,Detec_Accuracy); 
-             
-                    
-                    %--------------------------------------------------------
-                    %Update Quest Structure
-                    %--------------------------------------------------------                   
-                    
-                    if block == 1 && TargetType ==1 && CuePresent ==0
-                            Q_block=QuestUpdate(Q_block,contrast,Detec_Accuracy); 
+                    for obstaclenum=1:6
+                        if  trialMatrix.lateralized(this_trial) ==1
+                            fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
+                               trialMatrix.lateralized(this_trial), trialMatrix.side(this_trial), moves, mazeRT, obstaclenum,sVGC_right_mazes_lat(obstaclenum,trialMatrix.mazeNo(this_trial)), ...
+                                dVGC_right_mazes_lat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjectivereports(obstaclenum)); 
+                        elseif  trialMatrix.lateralized(this_trial) ==0
+                               fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
+                               trialMatrix.lateralized(this_trial), trialMatrix.side(this_trial), moves, mazeRT, obstaclenum,sVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), ...
+                                dVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjectivereports(obstaclenum)); 
+
+                        end
                     end
-                    
+
+             
                     %------------------------------------------------------------
                     % BLOCK CHECK
                     %------------------------------------------------------------
     
-                    if (itrial < nTrials) && (mod(itrial,120)==0)
+                    if (itrial < nTrials) && (mod(itrial,64)==0)
     
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-                                            Screen(messageWindow,'TextSize',11)
-                                            blockMessage = sprintf('End of Block %d of 10 blocks.',block);
+                                            Screen(messageWindow,'TextSize',22)
+                                            blockMessage = sprintf('End of Block %d of 18 blocks.',block);
                                             Width1=Screen(messageWindow,'TextBounds',blockMessage);
                                             Screen('DrawText', messageWindow,blockMessage,centerX-(round(Width1(3)/2)),centerY-100, black);
                                             Width=Screen(messageWindow,'TextBounds','Press Space Bar to Continue');
@@ -1198,8 +1075,13 @@ Detec_Accuracy=0;
                     %------------------------------------------------------------
                     % EXIT EXPERIMENT (PRESS Q KEY DURING TRIAL)
                     %------------------------------------------------------------
+                        [keyIsDown,secs,keyCode]=KbCheck;
+                         if keyIsDown==1
+                                 keyCode= find(keyCode==1);
+                         end
                     
-                    if Detec_key_pressed ==20
+                    if keyCode(1) ==20
+                        clear all
                         fclose(fid);
                         sca
                         close all
