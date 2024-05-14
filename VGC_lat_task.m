@@ -18,11 +18,11 @@ function task_representations
 
 CurrentFrameRateHz=FrameRate(0);
 
-%if (FrameRate(0)~=75)
-%     disp('Screen refresh rate is not 75Hz. Plese adjust Screen refresh rate to 75 Hz!')
-%     disp('check resolution')
-%     return
-%end
+if (round(CurrentFrameRateHz)~=60)
+    disp('Screen refresh rate is not 60Hz. Plese adjust Screen refresh rate to 60 Hz!')
+    disp('check resolution')
+    return
+end
 
 %------------------------------------------------------------
 %EXPERIMENT INFORMATION
@@ -45,7 +45,7 @@ experiment = 'VGC_lat_behav';
 % Call function to update Maze stims
 create_VGC_stims()
 
-% colour gradient
+% colour gradient from green to yellow 
 cMap = interp1([0;1],[0 1 0; 1 1 0],linspace(0,1,256));
 
 % load in stims
@@ -55,19 +55,21 @@ load('./StimMazes_RGB_4_Matlab.mat');
 maze= repmat([1:48],1,4)';
 lateralized=repelem([0,1],1,96)';
 side= repelem([1,2,1,2],1,48)';
-temp=repmat([maze,lateralized, side], 6,1);
+temp=repmat([maze,lateralized, side], 3,1); % repeat trial matrix three time
 trialMatrix= table(temp(:,1), temp(:,2), temp(:,3));
 trialMatrix.Properties.VariableNames = ["mazeNo", "lateralized", "side"];
 
 trialMatrix = trialMatrix(randperm(size(trialMatrix,1)), :);
 nTrials=size(trialMatrix,1);
 
+% save colours for easy access
 maze_array= {};
 maze_array([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=stim_right_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==1]));
 maze_array([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=stim_left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
 maze_array([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=stim_orig_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
 maze_array([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=stim_flipped_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
 
+% save obstacle numbers for easy access
 maze_obstacles= {};
 maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=right_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==1]));
 maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
@@ -106,7 +108,6 @@ Screen('Flip', mainWin );
 
 
 % set up locations of squares and fixation
-
 color_fixation= stim_right_mazes_lat{1,1};
 index_fix_temp=cell2mat(cellfun(@sum, color_fixation, 'UniformOutput', false)) > 0;
 
@@ -115,8 +116,11 @@ color_fixationtemp=color_fixation;
 color_fixation= reshape(color_fixation, [1, 11*11]);
 color_fixation= vertcat(color_fixation{:})';
 
+% center fixation location (middle of center square) 
 center_fix_loc= [centerX-20 centerY-15; centerX+20 centerY-15; centerX, centerY-35; centerX, centerY+5]';
 
+% list of locations of all squares
+% 11 by 11 grid
 stim_loc=[[centerX-180 centerY-120 centerX-150 centerY-90];
     [centerX-150 centerY-120 centerX-120 centerY-90];
 [centerX-120 centerY-120 centerX-90 centerY-90]; 
@@ -249,6 +253,8 @@ stim_loc=[[centerX-180 centerY-120 centerX-150 centerY-90];
 [centerX+90 centerY+180 centerX+120 centerY+210]; 
 [centerX+120 centerY+180 centerX+150 centerY+210] ];
 
+% move things over to center in the middle of the display bc uneven number
+% of rows and cols
 stim_loc(:,1)= stim_loc(:, 1)+15;
 stim_loc(:,2)= stim_loc(:, 2)-60;
 stim_loc(:,3)= stim_loc(:, 3)+15;
@@ -258,7 +264,7 @@ stim_loc(:,4)= stim_loc(:, 4)-60;
 %SET UP KEYBOARD
 %------------------------------------------------------------
 
- KbName('UnifyKeyNames');
+KbName('UnifyKeyNames');
 KbCheckList = [KbName('space'),KbName('ESCAPE')];
 
 %-------------------------------------------------------
@@ -587,9 +593,7 @@ for this_practicetrial=1:nPracticeTrials
                 %Fixation-Cue SOA
                 %------------------------------------------------------------                     
                     
-                FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1280ms and 2567ms   
-                OffStartSOA = 54;  % period between the offset of the task and the start of the trial
-                
+                FixOffSOA = round((60 - 30)*rand(1,1) + 30); %random between 500ms and 1000ms   
                 colour_stims= maze_array(1,this_practicetrial);
                 colour_stims= reshape(colour_stims{1}', [1, 11*11]);
                 colour_stims= vertcat(colour_stims{:})';
@@ -636,7 +640,7 @@ for this_practicetrial=1:nPracticeTrials
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (60*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
@@ -650,7 +654,7 @@ for this_practicetrial=1:nPracticeTrials
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (60*IFI) - slack,0);
 
 
                     % get starting position of icon
@@ -658,12 +662,11 @@ for this_practicetrial=1:nPracticeTrials
                     position_self{1,1}= position_self{1,1}';
                     [irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
 
-                                       % get position of goal
+                    % get position of goal
                     [grow ,gcol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 0], position_self{1,1}, 'UniformOutput', false))) ==3);
                     moves=0;
 
                     while 1
-
                         % update position of icon if participant moved
                              [keyIsDown,secs,keyCode]=KbCheck;
 
@@ -729,94 +732,96 @@ for this_practicetrial=1:nPracticeTrials
                     WaitSecs(0.3);
 
                     for numobstacles =0:5 % index off bc of python
-                    subjpos=randi([1 8], 1); % start at random position
-
-                     % draw scale 
-                    Screen(mainWin, 'TextSize' , 22)
-                    Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
-                    Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
-                    
-
-                    colour_stims= color_fixationtemp;
-                    %colour_stims= maze_array{1, this_practicetrial};
-                    obstacles=maze_obstacles{1, this_practicetrial};
-                    index_obstacle=  obstacles == num2str(numobstacles);
-                    colour_stims(index_obstacle) = {[1,0 0]};
-
-                    colour_stims= reshape(colour_stims', [1, 11*11]);
-                    colour_stims= vertcat(colour_stims{:})';
-
-                    %show Start of response 
-                    Screen('FillRect',mainWin, colour_stims ,stim_loc');
-                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-                    
-                   scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
-                            centerX-350, centerY+270-30; centerX-350, centerY+270+30;
-                            centerX-250, centerY+270-30; centerX-250, centerY+270+30;
-                            centerX-150, centerY+270-30; centerX-150, centerY+270+30;
-                           centerX-50, centerY+270-30; centerX-50, centerY+270+30;
-                           centerX+50, centerY+270-30; centerX+50, centerY+270+30;
-                           centerX+150, centerY+270-30; centerX+150, centerY+270+30;
-                           centerX+250, centerY+270-30; centerX+250, centerY+270+30;
-                           centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
-                        
-                        Screen('DrawLines',mainWin,scale_pos, 10, black);
-                        head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
-                        width  = 20;           % width of arrow head
-                        points = [ head-[width,0]         % left corner
-                                       head+[width,0]         % right corner
-                                       head+[0,width] ];      % vertex
-                        Screen('FillPoly', mainWin, white, points);
-                        
-                        Width=Screen(mainWin,'TextBounds','unaware');
-                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
-                        Width=Screen(mainWin,'TextBounds','aware');
-                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
-                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
-                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
-                        SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
-
-                        subjreported=1;
-                        KbReleaseWait;
-
-                    while subjreported
-                           [keyIsDown,secs,keyCode]=KbCheck;
-                             if keyIsDown==1
-                                 keyCode= find(keyCode==1);
-                                 if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
-                                     subjpos= subjpos-1;
-                                 elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
-                                      subjpos= subjpos+1;
-                                 elseif  keyCode(1) == 32 
-                                     subjreported=0;
-                                 end
-                             end
-
-                    % draw scale 
+                         % start at random position of subj report scale not to bias participant response
+                         subjpos=randi([1 8], 1);
+    
+                         % draw scale 
+                        Screen(mainWin, 'TextSize' , 22)
                         Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
                         Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
                         
-                         %show Start of response 
+                        colour_stims= color_fixationtemp;
+                        %colour_stims= maze_array{1, this_practicetrial};
+                        obstacles=maze_obstacles{1, this_practicetrial};
+                        index_obstacle=  obstacles == num2str(numobstacles);
+                        colour_stims(index_obstacle) = {[1,0 0]};
+    
+                        colour_stims= reshape(colour_stims', [1, 11*11]);
+                        colour_stims= vertcat(colour_stims{:})';
+    
+                        %show Start of response 
                         Screen('FillRect',mainWin, colour_stims ,stim_loc');
                         Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
-
-                        Screen('DrawLines',mainWin,scale_pos, 10, black);
-                        head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
-                        width  = 20;           % width of arrow head
-                        points = [ head-[width,0]         % left corner
-                                       head+[width,0]         % right corner
-                                       head+[0,width] ];      % vertex
-                        Screen('FillPoly', mainWin, white, points);
                         
-                        Width=Screen(mainWin,'TextBounds','unaware');
-                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
-                        Width=Screen(mainWin,'TextBounds','aware');
-                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
-                        Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
-                        Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
-                        SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
-                        WaitSecs(0.1);
-                    end
+                       scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
+                                centerX-350, centerY+270-30; centerX-350, centerY+270+30;
+                                centerX-250, centerY+270-30; centerX-250, centerY+270+30;
+                                centerX-150, centerY+270-30; centerX-150, centerY+270+30;
+                               centerX-50, centerY+270-30; centerX-50, centerY+270+30;
+                               centerX+50, centerY+270-30; centerX+50, centerY+270+30;
+                               centerX+150, centerY+270-30; centerX+150, centerY+270+30;
+                               centerX+250, centerY+270-30; centerX+250, centerY+270+30;
+                               centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
+                            
+                            Screen('DrawLines',mainWin,scale_pos, 10, black);
+                            head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
+                            width  = 20;           % width of arrow head
+                            points = [ head-[width,0]         % left corner
+                                           head+[width,0]         % right corner
+                                           head+[0,width] ];      % vertex
+                            Screen('FillPoly', mainWin, white, points);
+                            
+                            Width=Screen(mainWin,'TextBounds','unaware');
+                            Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
+                            Width=Screen(mainWin,'TextBounds','aware');
+                            Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                            Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                            Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                            SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+    
+                            subjreported=1;
+                            KbReleaseWait;
+    
+                            % loop until participant says they are happy
+                            % with report by pressing space (subjreported)
+                        while subjreported
+                               [keyIsDown,secs,keyCode]=KbCheck;
+                                 if keyIsDown==1
+                                     keyCode= find(keyCode==1);
+                                     if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                         subjpos= subjpos-1;
+                                     elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                          subjpos= subjpos+1;
+                                     elseif  keyCode(1) == 32 
+                                         subjreported=0;
+                                     end
+                                 end
+    
+                        % draw scale 
+                            Width=Screen(mainWin,'TextBounds','How aware of  the highlighted obstacle were you at any point?');
+                            Screen('DrawText',mainWin,'How aware of  the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-300, white);
+                            
+                             %show Start of response 
+                            Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                            Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+    
+                            Screen('DrawLines',mainWin,scale_pos, 10, black);
+                            head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
+                            width  = 20;           % width of arrow head
+                            points = [ head-[width,0]         % left corner
+                                           head+[width,0]         % right corner
+                                           head+[0,width] ];      % vertex
+                            Screen('FillPoly', mainWin, white, points);
+                            
+                            Width=Screen(mainWin,'TextBounds','unaware');
+                            Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
+                            Width=Screen(mainWin,'TextBounds','aware');
+                            Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                            Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
+                            Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
+                            SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
+                            WaitSecs(0.1);
+                        end
                     end
 
                     %show Black Screen
@@ -923,9 +928,7 @@ for this_trial=1:nTrials
                 %Fixation-Cue SOA
                 %------------------------------------------------------------                     
                     
-                FixOffSOA = round((154 - 77)*rand(1,1) + 77); %random between 1000ms and 2000ms   
-                OffStartSOA = 54;  % period between the offset of the task and the start of the trial
-                
+                FixOffSOA = round((60 - 30)*rand(1,1) + 30); %random between 500ms and 1000ms   colour_stims= maze_array(1,this_trial);
                 colour_stims= maze_array(1,this_trial);
                 colour_stims= reshape(colour_stims{1}', [1, 11*11]);
                 colour_stims= vertcat(colour_stims{:})';
@@ -972,7 +975,7 @@ for this_trial=1:nTrials
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (60*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
@@ -986,7 +989,7 @@ for this_trial=1:nTrials
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
+                    ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (60*IFI) - slack,0);
 
 
                     % get starting position of icon
@@ -1174,7 +1177,9 @@ for this_trial=1:nTrials
                     %--------------------------------------------------------
     
                     format = '%s, %s, %f, %s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\n'; %19
-
+    
+                    % write a line for each obstacle they reported
+                    % awareness of (6 obstacles total per trial) 
                     for obstaclenum=1:6
                         if  trialMatrix.lateralized(this_trial) ==1
                             fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
@@ -1248,14 +1253,13 @@ for this_trial=1:nTrials
                     Screen('Close');  
                     
                     %------------------------------------------------------------
-                    % EXIT EXPERIMENT (PRESS Q KEY DURING TRIAL)
-                    %------------------------------------------------------------
+                    % EXIT EXPERIMENT (PRESS ESC KEY DURING TRIAL)KbName('KeyNames')
                         [keyIsDown,secs,keyCode]=KbCheck;
                          if keyIsDown==1
                                  keyCode= find(keyCode==1);
                          end
                     
-                    if keyCode(1) ==20
+                    if keyCode(1) ==27
                         clear all
                         fclose(fid);
                         sca
@@ -1286,8 +1290,5 @@ end
         end
         fclose(fid);
         sca
-                                 
-            
-
-
+         
 end
