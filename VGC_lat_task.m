@@ -454,6 +454,9 @@ Width=Screen(messageWindow,'TextBounds','When the maze reappears you can begin t
 Screen('DrawText',messageWindow,'When the maze reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-120, white);
 Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT index finger');
 Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT index finger',centerX-(round(Width(3)/2)), centerY-60, white);
+Width=Screen(messageWindow,'TextBounds','Please navigate the mazes as quickly and as accurately as possible');
+Screen('DrawText',messageWindow,'Please navigate the mazes as quickly and as accurately as possible:',centerX-(round(Width(3)/2)), centerY-0, white);
+
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -466,6 +469,37 @@ while 1
     end   
 end
 
+
+WaitSecs(1);
+messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+Screen(messageWindow,'TextSize'  , 22)
+Width=Screen(messageWindow,'TextBounds','We are interested in your though process while navigating each maze');
+Screen('DrawText',messageWindow,'We are interested in your though process while navigating each maze',centerX-(round(Width(3)/2)), centerY-300, white);
+Width=Screen(messageWindow,'TextBounds','Following each trial we will ask how AWARE of an obstacle you were at any point');
+Screen('DrawText',messageWindow,'Following each trial we will ask how AWARE of an obstacle you were at any point',centerX-(round(Width(3)/2)), centerY-240, white);
+Width=Screen(messageWindow,'TextBounds','Your answer should reflect the amount you kept this obstacle in mind');
+Screen('DrawText',messageWindow,'Your answer should reflect the amount you kept this obstacle in mind:',centerX-(round(Width(3)/2)), centerY-180, white);
+Width=Screen(messageWindow,'TextBounds','whether at the start or end of navigating the maze');
+Screen('DrawText',messageWindow,'whether at the start or end of navigating the maze:',centerX-(round(Width(3)/2)), centerY-120, white);
+Width=Screen(messageWindow,'TextBounds','YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK');
+Screen('DrawText',messageWindow,'YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK:',centerX-(round(Width(3)/2)), centerY-60, white);
+Width=Screen(messageWindow,'TextBounds','Please answer the awarness probe as quickly and as accurately as possible');
+Screen('DrawText',messageWindow,'Please answer the awarness probe as quickly and as accurately as possible:',centerX-(round(Width(3)/2)), centerY-0, white);
+
+
+Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
+Screen('DrawTexture',mainWin,messageWindow);
+Screen('Flip',mainWin)
+
+
+while 1
+    [keyIsDown,secs,keyCode] = KbCheck; 
+    if  keyCode(32)==1 || keyCode(44)==1
+        break
+    end
+end
+         
     
 WaitSecs(1);
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
@@ -601,7 +635,7 @@ for this_practicetrial=1:nPracticeTrials
                 %--------------------------------------------------------------------
                 %STREAM LOOP AND COLLECT RESPONSE
                 %--------------------------------------------------------------------                        
-                    
+                     tic 
                     %Reset Variables
                     GreyWinTime=0;
                     FixationWinTime=0;
@@ -832,6 +866,7 @@ for this_practicetrial=1:nPracticeTrials
                     %---------------
                     % AlLow other processes to run optimally
                     Priority(0); 
+                    toc
  
 end
 
