@@ -45,6 +45,9 @@ experiment = 'VGC_lat_behav';
 % Call function to update Maze stims
 create_VGC_stims()
 
+% colour gradient
+cMap = interp1([0;1],[0 1 0; 1 1 0],linspace(0,1,256));
+
 % load in stims
 load('./StimMazes_RGB_4_Matlab.mat');
 
@@ -70,7 +73,6 @@ maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=right_mazes
 maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
 maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=orig_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
 maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=flipped_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
-
 
 %------------------------------------------------------------
 %SET UP DISPLAY
@@ -113,77 +115,143 @@ color_fixationtemp=color_fixation;
 color_fixation= reshape(color_fixation, [1, 11*11]);
 color_fixation= vertcat(color_fixation{:})';
 
+center_fix_loc= [centerX-20 centerY-15; centerX+20 centerY-15; centerX, centerY-35; centerX, centerY+5]';
 
-stim_loc=[[centerX-240 centerY-160 centerX-200 centerY-120]; [centerX-200 centerY-160 centerX-160 centerY-120];
-[centerX-160 centerY-160 centerX-120 centerY-120]; [centerX-120 centerY-160 centerX-80 centerY-120];
-[centerX-80 centerY-160 centerX-40 centerY-120]; [centerX-40 centerY-160 centerX+0 centerY-120]; [centerX+0 centerY-160 centerX+40 centerY-120];  
-[centerX+40 centerY-160 centerX+80 centerY-120]; [centerX+80 centerY-160 centerX+120 centerY-120]; 
-[centerX+120 centerY-160 centerX+160 centerY-120]; [centerX+160 centerY-160 centerX+200 centerY-120]; 
+stim_loc=[[centerX-180 centerY-120 centerX-150 centerY-90];
+    [centerX-150 centerY-120 centerX-120 centerY-90];
+[centerX-120 centerY-120 centerX-90 centerY-90]; 
+[centerX-90 centerY-120 centerX-60 centerY-90];
+[centerX-60 centerY-120 centerX-30 centerY-90];
+[centerX-30 centerY-120 centerX+0 centerY-90];
+[centerX+0 centerY-120 centerX+30 centerY-90];  
+[centerX+30 centerY-120 centerX+60 centerY-90]; 
+[centerX+60 centerY-120 centerX+90 centerY-90]; 
+[centerX+90 centerY-120 centerX+120 centerY-90]; 
+[centerX+120 centerY-120 centerX+150 centerY-90]; 
 ...
-[centerX-240 centerY-120 centerX-200 centerY-80]; [centerX-200 centerY-120 centerX-160 centerY-80];
-[centerX-160 centerY-120 centerX-120 centerY-80]; [centerX-120 centerY-120 centerX-80 centerY-80 ]; [centerX-80 centerY-120 centerX-40 centerY-80]; 
-[centerX-40 centerY-120 centerX+0 centerY-80]; [centerX+0 centerY-120 centerX+40 centerY-80];  
-[centerX+40 centerY-120 centerX+80 centerY-80]; [centerX+80 centerY-120 centerX+120 centerY-80]; [centerX+120 centerY-120 centerX+160 centerY-80]; 
-[centerX+160 centerY-120 centerX+200 centerY-80]; 
+[centerX-180 centerY-90 centerX-150 centerY-60];
+[centerX-150 centerY-90 centerX-120 centerY-60];
+[centerX-120 centerY-90 centerX-90 centerY-60];
+[centerX-90 centerY-90 centerX-60 centerY-60 ];
+[centerX-60 centerY-90 centerX-30 centerY-60]; 
+[centerX-30 centerY-90 centerX+0 centerY-60];
+[centerX+0 centerY-90 centerX+30 centerY-60];  
+[centerX+30 centerY-90 centerX+60 centerY-60]; 
+[centerX+60 centerY-90 centerX+90 centerY-60];
+[centerX+90 centerY-90 centerX+120 centerY-60]; 
+[centerX+120 centerY-90 centerX+150 centerY-60]; 
 ...
-[centerX-240 centerY-80 centerX-200 centerY-40]; [centerX-200 centerY-80 centerX-160 centerY-40];
-[centerX-160 centerY-80 centerX-120 centerY-40]; [centerX-120 centerY-80 centerX-80 centerY-40];
-[centerX-80 centerY-80 centerX-40 centerY-40]; [centerX-40 centerY-80 centerX centerY-40];
-[centerX+0 centerY-80 centerX+40 centerY-40]; [centerX+40 centerY-80 centerX+80 centerY-40];  [centerX+80 centerY-80 centerX+120 centerY-40]; 
-[centerX+120 centerY-80 centerX+160 centerY-40]; [centerX+160 centerY-80 centerX+200 centerY-40]; 
+[centerX-180 centerY-60 centerX-150 centerY-30];
+[centerX-150 centerY-60 centerX-120 centerY-30];
+[centerX-120 centerY-60 centerX-90 centerY-30];
+[centerX-90 centerY-60 centerX-60 centerY-30];
+[centerX-60 centerY-60 centerX-30 centerY-30]; 
+[centerX-30 centerY-60 centerX centerY-30];
+[centerX+0 centerY-60 centerX+30 centerY-30]; 
+[centerX+30 centerY-60 centerX+60 centerY-30]; 
+[centerX+60 centerY-60 centerX+90 centerY-30]; 
+[centerX+90 centerY-60 centerX+120 centerY-30]; 
+[centerX+120 centerY-60 centerX+150 centerY-30]; 
 ...
-[centerX-240 centerY-40 centerX-200 centerY-0];[centerX-200 centerY-40 centerX-160 centerY-0];[centerX-160 centerY-40 centerX-120 centerY-0];
-[centerX-120 centerY-40 centerX-80 centerY]; [centerX-80 centerY-40 centerX-40 centerY]; 
-[centerX-40 centerY-40 centerX+0 centerY];  [centerX+0 centerY-40 centerX+40 centerY];  [centerX+40 centerY-40 centerX+80 centerY]; 
-[centerX+80 centerY-40 centerX+120 centerY-0]; [centerX+120 centerY-40 centerX+160 centerY-0]; 
-[centerX+160 centerY-40 centerX+200 centerY-0]; 
+[centerX-180 centerY-30 centerX-150 centerY-0];
+[centerX-150 centerY-30 centerX-120 centerY-0];
+[centerX-120 centerY-30 centerX-90 centerY-0];
+[centerX-90 centerY-30 centerX-60 centerY]; 
+[centerX-60 centerY-30 centerX-30 centerY]; 
+[centerX-30 centerY-30 centerX+0 centerY];
+ [centerX+0 centerY-30 centerX+30 centerY]; 
+ [centerX+30 centerY-30 centerX+60 centerY]; 
+[centerX+60 centerY-30 centerX+90 centerY-0];
+[centerX+90 centerY-30 centerX+120 centerY-0]; 
+[centerX+120 centerY-30 centerX+150 centerY-0]; 
 ...
-[centerX-240 centerY-0 centerX-200 centerY+40];[centerX-200 centerY-0 centerX-160 centerY+40];
-[centerX-160 centerY-0 centerX-120 centerY+40];[centerX-120 centerY-0 centerX-80 centerY+40];
-[centerX-80 centerY-0 centerX-40 centerY+40]; [centerX-40 centerY-0 centerX centerY+40];
-[centerX+0 centerY-0 centerX+40 centerY+40]; [centerX+40 centerY-0 centerX+80 centerY+40]; 
-[centerX+80 centerY-0 centerX+120 centerY+40]; [centerX+120 centerY-0 centerX+160 centerY+40]; 
-[centerX+160 centerY-0 centerX+200 centerY+40]; 
+[centerX-180 centerY-0 centerX-150 centerY+30];
+[centerX-150 centerY-0 centerX-120 centerY+30];
+[centerX-120 centerY-0 centerX-90 centerY+30];
+[centerX-90 centerY-0 centerX-60 centerY+30];
+[centerX-60 centerY-0 centerX-30 centerY+30]; 
+[centerX-30 centerY-0 centerX centerY+30];
+[centerX+0 centerY-0 centerX+30 centerY+30]; 
+[centerX+30 centerY-0 centerX+60 centerY+30]; 
+[centerX+60 centerY-0 centerX+90 centerY+30];
+[centerX+90 centerY-0 centerX+120 centerY+30]; 
+[centerX+120 centerY-0 centerX+150 centerY+30]; 
 ...
-[centerX-240 centerY+40 centerX-200 centerY+80]; [centerX-200 centerY+40 centerX-160 centerY+80];
-[centerX-160 centerY+40 centerX-120 centerY+80]; [centerX-120 centerY+40 centerX-80 centerY+80];
-[centerX-80 centerY+40 centerX-40 centerY+80]; [centerX-40 centerY+40 centerX centerY+80];
-[centerX+0 centerY+40 centerX+40 centerY+80];[centerX+40 centerY+40 centerX+80 centerY+80]; 
-[centerX+80 centerY+40 centerX+120 centerY+80]; [centerX+120 centerY+40 centerX+160 centerY+80]; 
-[centerX+160 centerY+40 centerX+200 centerY+80]; 
+[centerX-180 centerY+30 centerX-150 centerY+60]; 
+[centerX-150 centerY+30 centerX-120 centerY+60];
+[centerX-120 centerY+30 centerX-90 centerY+60]; 
+[centerX-90 centerY+30 centerX-60 centerY+60];
+[centerX-60 centerY+30 centerX-30 centerY+60];
+[centerX-30 centerY+30 centerX centerY+60];
+[centerX+0 centerY+30 centerX+30 centerY+60];
+[centerX+30 centerY+30 centerX+60 centerY+60]; 
+[centerX+60 centerY+30 centerX+90 centerY+60]; 
+[centerX+90 centerY+30 centerX+120 centerY+60]; 
+[centerX+120 centerY+30 centerX+150 centerY+60]; 
 ...
-[centerX-240 centerY+80 centerX-200 centerY+120];[centerX-200 centerY+80 centerX-160 centerY+120];
-[centerX-160 centerY+80 centerX-120 centerY+120];[centerX-120 centerY+80 centerX-80 centerY+120];[centerX-80 centerY+80 centerX-40 centerY+120];
-[centerX-40 centerY+80 centerX centerY+120];[centerX+0 centerY+80 centerX+40 centerY+120];
-[centerX+40 centerY+80 centerX+80 centerY+120]; [centerX+80 centerY+80 centerX+120 centerY+120]; 
-[centerX+120 centerY+80 centerX+160 centerY+120]; [centerX+160 centerY+80 centerX+200 centerY+120]; 
+[centerX-180 centerY+60 centerX-150 centerY+90];
+[centerX-150 centerY+60 centerX-120 centerY+90];
+[centerX-120 centerY+60 centerX-90 centerY+90];
+[centerX-90 centerY+60 centerX-60 centerY+90];
+[centerX-60 centerY+60 centerX-30 centerY+90];
+[centerX-30 centerY+60 centerX centerY+90];
+[centerX+0 centerY+60 centerX+30 centerY+90];
+[centerX+30 centerY+60 centerX+60 centerY+90];
+[centerX+60 centerY+60 centerX+90 centerY+90]; 
+[centerX+90 centerY+60 centerX+120 centerY+90];
+[centerX+120 centerY+60 centerX+150 centerY+90]; 
 ...
-[centerX-240 centerY+120 centerX-200 centerY+160];[centerX-200 centerY+120 centerX-160 centerY+160];
-[centerX-160 centerY+120 centerX-120 centerY+160];[centerX-120 centerY+120 centerX-80 centerY+160];[centerX-80 centerY+120 centerX-40 centerY+160];
-[centerX-40 centerY+120 centerX centerY+160]; [centerX+0 centerY+120 centerX+40 centerY+160];
-[centerX+40 centerY+120 centerX+80 centerY+160]; [centerX+80 centerY+120 centerX+120 centerY+160]; 
-[centerX+120 centerY+120 centerX+160 centerY+160]; [centerX+160 centerY+120 centerX+200 centerY+160]; 
+[centerX-180 centerY+90 centerX-150 centerY+120];
+[centerX-150 centerY+90 centerX-120 centerY+120];
+[centerX-120 centerY+90 centerX-90 centerY+120];
+[centerX-90 centerY+90 centerX-60 centerY+120];
+[centerX-60 centerY+90 centerX-30 centerY+120];
+[centerX-30 centerY+90 centerX centerY+120];
+[centerX+0 centerY+90 centerX+30 centerY+120];
+[centerX+30 centerY+90 centerX+60 centerY+120];
+[centerX+60 centerY+90 centerX+90 centerY+120]; 
+[centerX+90 centerY+90 centerX+120 centerY+120];
+[centerX+120 centerY+90 centerX+150 centerY+120]; 
 ...
-[centerX-240 centerY+160 centerX-200 centerY+200];[centerX-200 centerY+160 centerX-160 centerY+200];
-[centerX-160 centerY+160 centerX-120 centerY+200];[centerX-120 centerY+160 centerX-80 centerY+200];
-[centerX-80 centerY+160 centerX-40 centerY+200];[centerX-40 centerY+160 centerX centerY+200];
-[centerX+0 centerY+160 centerX+40 centerY+200];[centerX+40 centerY+160 centerX+80 centerY+200]; 
-[centerX+80 centerY+160 centerX+120 centerY+200]; [centerX+120 centerY+160 centerX+160 centerY+200]; 
-[centerX+160 centerY+160 centerX+200 centerY+200]; 
+[centerX-180 centerY+120 centerX-150 centerY+150];
+[centerX-150 centerY+120 centerX-120 centerY+150];
+[centerX-120 centerY+120 centerX-90 centerY+150];
+[centerX-90 centerY+120 centerX-60 centerY+150];
+[centerX-60 centerY+120 centerX-30 centerY+150];
+[centerX-30 centerY+120 centerX centerY+150];
+[centerX+0 centerY+120 centerX+30 centerY+150];
+[centerX+30 centerY+120 centerX+60 centerY+150]; 
+[centerX+60 centerY+120 centerX+90 centerY+150]; 
+[centerX+90 centerY+120 centerX+120 centerY+150]; 
+[centerX+120 centerY+120 centerX+150 centerY+150]; 
 ...
-[centerX-240 centerY+200 centerX-200 centerY+240];[centerX-200 centerY+200 centerX-160 centerY+240]; [centerX-160 centerY+200 centerX-120 centerY+240];
-[centerX-120 centerY+200 centerX-80 centerY+240];[centerX-80 centerY+200 centerX-40 centerY+240];
-[centerX-40 centerY+200 centerX centerY+240];[centerX+0 centerY+200 centerX+40 centerY+240];
-[centerX+40 centerY+200 centerX+80 centerY+240]; [centerX+80 centerY+200 centerX+120 centerY+240]; 
-[centerX+120 centerY+200 centerX+160 centerY+240]; [centerX+160 centerY+200 centerX+200 centerY+240]; 
+[centerX-180 centerY+150 centerX-150 centerY+180];
+[centerX-150 centerY+150 centerX-120 centerY+180]; 
+[centerX-120 centerY+150 centerX-90 centerY+180];
+[centerX-90 centerY+150 centerX-60 centerY+180];
+[centerX-60 centerY+150 centerX-30 centerY+180];
+[centerX-30 centerY+150 centerX centerY+180];
+[centerX+0 centerY+150 centerX+30 centerY+180];
+[centerX+30 centerY+150 centerX+60 centerY+180]; 
+[centerX+60 centerY+150 centerX+90 centerY+180]; 
+[centerX+90 centerY+150 centerX+120 centerY+180];
+[centerX+120 centerY+150 centerX+150 centerY+180]; 
 ...
-[centerX-240 centerY+240 centerX-200 centerY+280];[centerX-200 centerY+240 centerX-160 centerY+280];[centerX-160 centerY+240 centerX-120 centerY+280];
-[centerX-120 centerY+240 centerX-80 centerY+280];[centerX-80 centerY+240 centerX-40 centerY+280];
-[centerX-40 centerY+240 centerX centerY+280];[centerX+0 centerY+240 centerX+40 centerY+280];
-[centerX+40 centerY+240 centerX+80 centerY+280]; [centerX+80 centerY+240 centerX+120 centerY+280]; 
-[centerX+120 centerY+240 centerX+160 centerY+280]; [centerX+160 centerY+240 centerX+200 centerY+280] ];
+[centerX-180 centerY+180 centerX-150 centerY+210];
+[centerX-150 centerY+180 centerX-120 centerY+210];
+[centerX-120 centerY+180 centerX-90 centerY+210];
+[centerX-90 centerY+180 centerX-60 centerY+210];
+[centerX-60 centerY+180 centerX-30 centerY+210];
+[centerX-30 centerY+180 centerX centerY+210];
+[centerX+0 centerY+180 centerX+30 centerY+210];
+[centerX+30 centerY+180 centerX+60 centerY+210];
+[centerX+60 centerY+180 centerX+90 centerY+210]; 
+[centerX+90 centerY+180 centerX+120 centerY+210]; 
+[centerX+120 centerY+180 centerX+150 centerY+210] ];
 
+stim_loc(:,1)= stim_loc(:, 1)+15;
 stim_loc(:,2)= stim_loc(:, 2)-60;
+stim_loc(:,3)= stim_loc(:, 3)+15;
 stim_loc(:,4)= stim_loc(:, 4)-60;
 
 %------------------------------------------------------------
@@ -280,8 +348,14 @@ Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(
 colour_stims= reshape(stim_right_mazes_lat{1}', [1, 11*11]);
 colour_stims= vertcat(colour_stims{:})';
 
+position_self{1,1}= stim_right_mazes_lat{1}';
+[irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
+self_pos=  stim_loc(11*(icol-1) + irow, :);
+
 Screen('FillRect',messageWindow,colour_stims ,stim_loc');
 Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
 
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
@@ -308,9 +382,46 @@ Screen('DrawText',messageWindow,'and you will need to make it to the green squar
 
 Screen('FillRect',messageWindow,colour_stims ,stim_loc');
 Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
+Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
 
+
+Width=Screen(messageWindow,'TextBounds','try to make it to the green square before it turns yellow');
+Screen('DrawText',messageWindow,'try to make it to the green square before it turns yellow',centerX-(round(Width(3)/2)), centerY+260, white);
 Width=Screen(messageWindow,'TextBounds','BEWARE of obstacles in blue');
 Screen('DrawText',messageWindow,'BEWARE of obstacles in blue',centerX-(round(Width(3)/2)), centerY+300, white);
+Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+Screen('DrawTexture',mainWin,messageWindow);
+Screen('Flip',mainWin)
+
+while 1
+    [keyIsDown,secs,keyCode] = KbCheck; 
+    if  keyCode(32)==1 || keyCode(44)==1
+        break
+    end   
+end
+
+
+
+WaitSecs(1);
+messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+Screen(messageWindow,'TextSize'  , 22)
+Width=Screen(messageWindow,'TextBounds',' we ask that you keep looking at the corss in the middle throughout the task');
+Screen('DrawText',messageWindow,'we ask that you keep looking at the corss in the middle throughout the task',centerX-(round(Width(3)/2)), centerY-360, white);
+Width=Screen(messageWindow,'TextBounds',' and to minimize eye movements when the maze is on the screen');
+Screen('DrawText',messageWindow,'and to minimize eye movements when the maze is on the screen',centerX-(round(Width(3)/2)), centerY-320, white);
+
+Screen('FillRect',messageWindow,colour_stims ,stim_loc');
+Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
+Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
+
+
+Width=Screen(messageWindow,'TextBounds','REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS' );
+Screen('DrawText',messageWindow,'REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS',centerX-(round(Width(3)/2)), centerY+260, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -330,13 +441,13 @@ Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','At the start of each trial, you will have');
 Screen('DrawText',messageWindow,'At the start of each trial, you will have',centerX-(round(Width(3)/2)), centerY-300, white);
 Width=Screen(messageWindow,'TextBounds','a few seconds to plan how you will solve the maze');
-Screen('DrawText',messageWindow,'a few seconds to plan how you will solve the maze',centerX-(round(Width(3)/2)), centerY-260, white);
+Screen('DrawText',messageWindow,'a few seconds to plan how you will solve the maze',centerX-(round(Width(3)/2)), centerY-240, white);
 Width=Screen(messageWindow,'TextBounds','Afterwards the maze will disapear');
-Screen('DrawText',messageWindow,'Afterwards the maze will disapear',centerX-(round(Width(3)/2)), centerY-220, white);
+Screen('DrawText',messageWindow,'Afterwards the maze will disapear',centerX-(round(Width(3)/2)), centerY-180, white);
 Width=Screen(messageWindow,'TextBounds','When the maze reappears you can begin to solve it!');
-Screen('DrawText',messageWindow,'When the maze reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-180, white);
+Screen('DrawText',messageWindow,'When the maze reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-120, white);
 Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT index finger');
-Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT index finger',centerX-(round(Width(3)/2)), centerY+100, white);
+Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT index finger',centerX-(round(Width(3)/2)), centerY-60, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
 Screen('DrawTexture',mainWin,messageWindow);
@@ -355,10 +466,12 @@ messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
 Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','At the end of each trial, you will be asked');
 Screen('DrawText',messageWindow,'At the end of each trial, you will be asked',centerX-(round(Width(3)/2)), centerY-300, white);
+Screen(messageWindow,'TextSize'  , 44)
 Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle were you at any point?');
-Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-260, white);
-Width=Screen(messageWindow,'TextBounds','You will respond on an 8 point scale like the one below');
-Screen('DrawText',messageWindow,'You will respond on an 8 point scale like the one below',centerX-(round(Width(3)/2)), centerY-220, white);
+Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-240, white);
+Screen(messageWindow,'TextSize'  , 22)
+Width=Screen(messageWindow,'TextBounds','You will respond on an 8 point scale like the one below:');
+Screen('DrawText',messageWindow,'You will respond on an 8 point scale like the one below:',centerX-(round(Width(3)/2)), centerY-160, white);
 
 % draw scale 
                    scale_pos= [centerX-350, centerY+0; centerX+350, centerY+0; 
@@ -378,6 +491,11 @@ points = [ head-[width,0]         % left corner
                head+[width,0]         % right corner
                head+[0,width] ];      % vertex
 Screen('FillPoly', messageWindow, white, points);
+
+Width=Screen(messageWindow,'TextBounds','use the arrow keys to move the curser along the scale');
+Screen('DrawText',messageWindow,'use the arrow keys to move the curser along the scale',centerX-(round(Width(3)/2)), centerY+220, white);
+Width=Screen(messageWindow,'TextBounds','press space when you are ready to submit your answer');
+Screen('DrawText',messageWindow,'press space when you are ready to submit your answer',centerX-(round(Width(3)/2)), centerY+260, white);
 
 Width=Screen(messageWindow,'TextBounds','unaware');
 Screen('DrawText',messageWindow,'unaware',centerX-450-(round(Width(3)/2)), centerY, white);
@@ -509,21 +627,29 @@ for this_practicetrial=1:nPracticeTrials
                     %show Fixation
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     FixationWinTime=Screen('flip',mainWin,GreyWinTime + (FixOffSOA*IFI) - slack,0); 
                     
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (180*IFI) - slack,0);
               
                     %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
 
 
@@ -563,13 +689,31 @@ for this_practicetrial=1:nPracticeTrials
                                  KbReleaseWait;
                              end
                              self_pos=  stim_loc(11*(icol-1) + irow, :);
+                             goal_pos=  stim_loc(11*(gcol-1) + grow, :);
 
+                             % change goal to yellow to motivate
+                             % participants 
+
+                             Time_Factor= (GetSecs-ResponseWinTime)/8;
+
+                             if Time_Factor > 1
+                                 Time_Factor =1;
+                             end
+
+                             Time_Factor=round(256*Time_Factor);
+
+                             if Time_Factor ==0
+                                 Time_Factor=1;
+                             end
 
                         %show Start of response 
                         Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FillRect',mainWin,  cMap(Time_Factor,:) ,goal_pos);
                         Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                         % add circle 
-                        Screen('DrawDots', mainWin, [self_pos(1) + 20, self_pos(2) + 20], 20, [1 0 0 ], [], 2)
+                        Screen('DrawDots', mainWin, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
+                        Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                        Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                         Screen('flip',mainWin,ResponseWinTime + (1*IFI) - slack,0);
 
                         % break loop if solved
@@ -819,21 +963,29 @@ for this_trial=1:nTrials
                     %show Fixation
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     FixationWinTime=Screen('flip',mainWin,GreyWinTime + (FixOffSOA*IFI) - slack,0); 
                     
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (77*IFI) - slack,0);
 
                     %show Delay period
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     StimulusOffsetWinTime= Screen('flip',mainWin,StimulusWinTime + (180*IFI) - slack,0);
               
                     %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
 
 
@@ -874,13 +1026,35 @@ for this_trial=1:nTrials
                              end
 
                              self_pos=  stim_loc(11*(icol-1) + irow, :);
+                             goal_pos=  stim_loc(11*(gcol-1) + grow, :);
+
+                             % change goal to yellow to motivate
+                             % participants 
+
+                             Time_Factor= (GetSecs-ResponseWinTime)/8;
+
+                             if Time_Factor > 1
+                                 Time_Factor =1;
+                             end
+
+                             Time_Factor=round(256*Time_Factor);
+
+                             if Time_Factor ==0
+                                 Time_Factor=1;
+                             end
 
 
                         %show Start of response 
                         Screen('FillRect',mainWin, colour_stims ,stim_loc');
+                        Screen('FillRect',mainWin,  cMap(Time_Factor,:) ,goal_pos);
                         Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+
+
                         % add circle 
-                        Screen('DrawDots', mainWin, [self_pos(1) + 20, self_pos(2) + 20], 20, [1 0 0 ], [], 2)
+                        Screen('DrawDots', mainWin, [(self_pos(1) +15), (self_pos(2) + 15)], 20, [1 0 0 ], [], 2)
+                        Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                        Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
+
                         Screen('flip',mainWin,ResponseWinTime + (1*IFI) - slack,0);
 
                         % break loop if solved
@@ -1019,12 +1193,12 @@ for this_trial=1:nTrials
                     % BLOCK CHECK
                     %------------------------------------------------------------
     
-                    if (itrial < nTrials) && (mod(itrial,32)==0)
+                    if (itrial < nTrials) && (mod(itrial,24)==0)
     
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
                                             Screen(messageWindow,'TextSize',22)
-                                            blockMessage = sprintf('End of Block %d of 36 blocks.',block);
+                                            blockMessage = sprintf('End of Block %d of 48 blocks.',block);
                                             Width1=Screen(messageWindow,'TextBounds',blockMessage);
                                             Screen('DrawText', messageWindow,blockMessage,centerX-(round(Width1(3)/2)),centerY-100, white);
                                             Width=Screen(messageWindow,'TextBounds','Press Space Bar to Continue');
