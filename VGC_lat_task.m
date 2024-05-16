@@ -1248,7 +1248,7 @@ for this_trial=1:nTrials
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
                                             Screen(messageWindow,'TextSize',22)
-                                            blockMessage = sprintf('End of Block %d of 48 blocks.',block);
+                                            blockMessage = sprintf('End of Block %d of 12 blocks.',block);
                                             Width1=Screen(messageWindow,'TextBounds',blockMessage);
                                             Screen('DrawText', messageWindow,blockMessage,centerX-(round(Width1(3)/2)),centerY-100, white);
                                             Width=Screen(messageWindow,'TextBounds','Press Space Bar to Continue');
