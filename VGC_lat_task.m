@@ -49,9 +49,9 @@ cMap = interp1([0;1],[0 1 0; 1 1 0],linspace(0,1,256));
 load('./StimMazes_RGB_4_Matlab.mat');
 
 % now let us make one big trail matrix 
-maze= repmat([1:48],1,4)';
-lateralized=repelem([0,1],1,96)';
-side= repelem([1,2,1,2],1,48)';
+maze= repmat([1:24],1,4)';
+lateralized=repelem([0,1],1,48)';
+side= repelem([1,2,1,2],1,24)';
 temp=repmat([maze,lateralized, side], 3,1); % repeat trial matrix three time
 trialMatrix= table(temp(:,1), temp(:,2), temp(:,3));
 trialMatrix.Properties.VariableNames = ["mazeNo", "lateralized", "side"];

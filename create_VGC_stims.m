@@ -10,14 +10,14 @@ function create_VGC_stims
     data=struct2cell(data);
     mazes_lateralized= cellfun(@cell2mat, data, 'UniformOutput', false);
 
-    % which ones are left  3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 18, 23
+    % which ones are left  2, 3, 4, 6, 7, 8, 10
 
     % seperate out left right lateralized
     left_mazes= mazes_lateralized;
     right_mazes= mazes_lateralized;
 
-    right_mazes([3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 18, 23])= cellfun(@fliplr, mazes_lateralized([3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 18, 23]), 'UniformOutput', false);
-    left_mazes([3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 18, 23])= cellfun(@fliplr, mazes_lateralized([3, 4, 5, 6, 9, 12, 13, 14, 16, 17, 18, 23]), 'UniformOutput', false);
+    right_mazes([2, 3, 4, 6, 7, 8, 10])= cellfun(@fliplr, mazes_lateralized([2, 3, 4, 6, 7, 8, 10]), 'UniformOutput', false);
+    left_mazes([2, 3, 4, 6, 7, 8, 10])= cellfun(@fliplr, mazes_lateralized([2, 3, 4, 6, 7, 8, 10]), 'UniformOutput', false);
     left_mazes= cellfun(@fliplr, left_mazes, 'UniformOutput', false);
 
     right_mazes_ud= cellfun(@flipud, right_mazes, 'UniformOutput', false);
@@ -46,7 +46,7 @@ function create_VGC_stims
 
     %% convert mazes to RGB
 
-    for i=1:48
+    for i=1:24
 
         temp=right_mazes_lat{i};
         tempint= cell(11,11);
@@ -94,10 +94,10 @@ function create_VGC_stims
 
     stats=readtable('./mazes/new_mazes_stats.csv');
 
-    sVGC_right_mazes_lat= reshape([stats.sVGC(1:144); stats.sVGC(1:144)]', [6,48]);
-    sVGC_orig_mazes_nonlat= reshape([stats.sVGC(145:end); stats.sVGC(145:end)]', [6,48]);
-    dVGC_right_mazes_lat= reshape([stats.dVGC(1:144); stats.dVGC(1:144)]', [6,48]);
-    dVGC_orig_mazes_nonlat=  reshape([stats.dVGC(145:end); stats.dVGC(145:end)]', [6,48]);
+    sVGC_right_mazes_lat= reshape([stats.sVGC(1:72); stats.sVGC(1:72)]', [6,24]);
+    sVGC_orig_mazes_nonlat= reshape([stats.sVGC(73:end); stats.sVGC(73:end)]', [6,24]);
+    dVGC_right_mazes_lat= reshape([stats.dVGC(1:72); stats.dVGC(1:72)]', [6,24]);
+    dVGC_orig_mazes_nonlat=  reshape([stats.dVGC(73:end); stats.dVGC(73:end)]', [6,24]);
     
     save('./StimMazes_RGB_4_Matlab.mat', ...
         'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat',...
