@@ -16,6 +16,7 @@ function task_representations
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 
 
+%% set up of experimental parameters 
 CurrentFrameRateHz=FrameRate(0);
 
 if (round(CurrentFrameRateHz)~=60)
@@ -24,10 +25,8 @@ if (round(CurrentFrameRateHz)~=60)
     return
 end
 
-%------------------------------------------------------------
 %EXPERIMENT INFORMATION
-%------------------------------------------------------------  
-        
+     
 prompt={'SubjectID:','Gender','Age','Handiness (1=LEFT or 2=RIGHT): ','Practice (1=Yes; 2=No)'};
 title='EXPERIMENT INFORMATION'; 
 answer=inputdlg(prompt,title);
@@ -38,9 +37,7 @@ handiness = str2num(answer{4});
 practice = str2num(answer{5});
 experiment = 'VGC_lat_behav';
 
-%------------------------------------------------------------
 % MAKE TRIAL MATRIX
-%------------------------------------------------------------
 
 % Call function to update Maze stims
 create_VGC_stims()
@@ -60,6 +57,7 @@ trialMatrix= table(temp(:,1), temp(:,2), temp(:,3));
 trialMatrix.Properties.VariableNames = ["mazeNo", "lateralized", "side"];
 
 trialMatrix = trialMatrix(randperm(size(trialMatrix,1)), :);
+trialMatrix = trialMatrix(randperm(size(trialMatrix,1)), :);
 nTrials=size(trialMatrix,1);
 
 % save colours for easy access
@@ -76,9 +74,8 @@ maze_obstacles([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=left_mazes_
 maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=orig_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
 maze_obstacles([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=flipped_mazes_nonlat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
 
-%------------------------------------------------------------
 %SET UP DISPLAY
-%------------------------------------------------------------
+
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
 
@@ -260,16 +257,12 @@ stim_loc(:,2)= stim_loc(:, 2)-60;
 stim_loc(:,3)= stim_loc(:, 3)+15;
 stim_loc(:,4)= stim_loc(:, 4)-60;
 
-%------------------------------------------------------------
 %SET UP KEYBOARD
-%------------------------------------------------------------
 
 KbName('UnifyKeyNames');
 KbCheckList = [KbName('space'),KbName('ESCAPE')];
 
-%-------------------------------------------------------
 %OPEN THE OUTPUT FILE AND GIVE IT HEADINGS 
-%-------------------------------------------------------
 
 fname = [subjectID,'.csv'];
 fid = fopen(fname,'a');   
@@ -287,22 +280,20 @@ fprintf(fid,'%-16.16s,','Solution.RT');
 fprintf(fid,'%-16.16s,','Obs.No');                                
 fprintf(fid,'%-16.16s,','sVGC.Obs'); 
 fprintf(fid,'%-16.16s,','dVGC.Obs'); 
-fprintf(fid,'%-16.16s,\n','Aware.ReportObs');  
-
-%------------------------------------------------------------
-%ALLTRIALS
-%------------------------------------------------------------  
-
+fprintf(fid,'%-16.16s,', 'Orig.RandPos');  
+fprintf(fid,'%-16.16s,', 'Aware.ReportObs');  
+fprintf(fid,'%-16.16s,','Subj.RT');  
+fprintf(fid,'%-16.16s,\n','Time.Trial');  
 itrial=1;
 
-%------------------------------------------------------------
 %DISPLAY SETUP
-%------------------------------------------------------------
 
 %message windows
 
 messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
 Screen(messageWindow,'TextSize',11);
+
+%% 
 
 %------------------------------------------------------------
 % DISPLAY BEGINING SCREEN
@@ -506,7 +497,7 @@ messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
 Screen(messageWindow,'TextSize'  , 22)
 Width=Screen(messageWindow,'TextBounds','At the end of each trial, you will be asked');
 Screen('DrawText',messageWindow,'At the end of each trial, you will be asked',centerX-(round(Width(3)/2)), centerY-300, white);
-Screen(messageWindow,'TextSize'  , 44)
+Screen(messageWindow,'TextSize'  , 30)
 Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle were you at any point?');
 Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-240, white);
 Screen(messageWindow,'TextSize'  , 22)
@@ -566,7 +557,6 @@ end
 %PRACTICE MATRIX
 %------------------------------------------------------------ 
 
-PracticeTrialSequence=trialMatrix(1:5,:);
 nPracticeTrials=5;
 
 %------------------------------------------------------------
@@ -606,12 +596,15 @@ while 1
     end
 end
 
+randtrials4pract= randperm(size(trialMatrix,1),nPracticeTrials);
 
 %------------------------------------------------------------
 %ALLPRACTICETRIALS
 %------------------------------------------------------------    
     
-for this_practicetrial=1:nPracticeTrials
+for iptrial=1:nPracticeTrials
+
+    this_practicetrial=randtrials4pract(iptrial);
 
 %------------------------------------------------------------
 %DISPLAY SETUP
@@ -623,14 +616,6 @@ for this_practicetrial=1:nPracticeTrials
 %-------------------------------------------------------------------------------------------
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
 %------------------------------------------------------------------------------------------
-                %------------------------------------------------------------
-                %Fixation-Cue SOA
-                %------------------------------------------------------------                     
-                    
-                FixOffSOA = round((60 - 30)*rand(1,1) + 30); %random between 500ms and 1000ms   
-                colour_stims= maze_array(1,this_practicetrial);
-                colour_stims= reshape(colour_stims{1}', [1, 11*11]);
-                colour_stims= vertcat(colour_stims{:})';
                 
                 %--------------------------------------------------------------------
                 %STREAM LOOP AND COLLECT RESPONSE
@@ -647,12 +632,22 @@ for this_practicetrial=1:nPracticeTrials
                     icol= 0;
                     grow=0;
                     gcol=0;
+                    colour_stims=0;
 
                     keyIsDown=0;
                     secs=0;
                     keyCode=[];
                     subjreported=0;
                     Subjective_key_pressed=0;
+
+                %------------------------------------------------------------
+                %Fixation-Cue SOA
+                %------------------------------------------------------------                     
+                    
+                FixOffSOA = round((60 - 30)*rand(1,1) + 30); %random between 500ms and 1000ms   
+                colour_stims= maze_array(1,this_practicetrial);
+                colour_stims= reshape(colour_stims{1}', [1, 11*11]);
+                colour_stims= vertcat(colour_stims{:})';
                     
                     % Screen priority
                     Priority(MaxPriority(mainWin));
@@ -660,7 +655,7 @@ for this_practicetrial=1:nPracticeTrials
                      
                     %show grey Screen, 
                     Screen('DrawTexture',mainWin,GreyScreen);
-                    GreyWinTime=Screen('flip',mainWin);
+                        GreyWinTime=Screen('flip',mainWin);
 
                     %show Fixation
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
@@ -768,6 +763,7 @@ for this_practicetrial=1:nPracticeTrials
                     for numobstacles =0:5 % index off bc of python
                          % start at random position of subj report scale not to bias participant response
                          subjpos=randi([1 8], 1);
+                         subjposorig=subjpos;
     
                          % draw scale 
                         Screen(mainWin, 'TextSize' , 22)
@@ -786,6 +782,8 @@ for this_practicetrial=1:nPracticeTrials
                         %show Start of response 
                         Screen('FillRect',mainWin, colour_stims ,stim_loc');
                         Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                        Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                        Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                         
                        scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
                                 centerX-350, centerY+270-30; centerX-350, centerY+270+30;
@@ -838,6 +836,8 @@ for this_practicetrial=1:nPracticeTrials
                              %show Start of response 
                             Screen('FillRect',mainWin, colour_stims ,stim_loc');
                             Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                            Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                            Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
     
                             Screen('DrawLines',mainWin,scale_pos, 10, black);
                             head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
@@ -959,6 +959,7 @@ for this_trial=1:nTrials
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
 %------------------------------------------------------------------------------------------
 
+                tic
                 %------------------------------------------------------------
                 %Fixation-Cue SOA
                 %------------------------------------------------------------                     
@@ -1108,7 +1109,8 @@ for this_trial=1:nTrials
                     WaitSecs(0.3);
 
                     for numobstacles =0:5 % index off bc of python
-                    subjpos=randi([1 8], 1); % start at random position
+                    subjpos=randi([1 8], 1); % start at random position 
+                    subjposorig(numobstacles+1)= subjpos;
 
                      % draw scale 
                     Screen(mainWin, 'TextSize' , 22)
@@ -1126,6 +1128,8 @@ for this_trial=1:nTrials
                     %show Start of response 
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     
                    scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
                             centerX-350, centerY+270-30; centerX-350, centerY+270+30;
@@ -1177,6 +1181,8 @@ for this_trial=1:nTrials
                          %show Start of response 
                         Screen('FillRect',mainWin, colour_stims ,stim_loc');
                         Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                        Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                        Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
 
                         Screen('DrawLines',mainWin,scale_pos, 10, black);
                         head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
@@ -1198,6 +1204,9 @@ for this_trial=1:nTrials
                         subjectivereports(numobstacles+1) = subjpos;
                     end
 
+                    % subj RT
+                    SubjRT= GetSecs -(mazeRT+ ResponseWinTime);
+
                     %show Black Screen
                     Screen('DrawTexture',mainWin,GreyScreen);
                     GreyWinTime=Screen('flip',mainWin,0);
@@ -1206,12 +1215,13 @@ for this_trial=1:nTrials
                     %---------------
                     % AlLow other processes to run optimally
                     Priority(0); 
+                    TimeTrial=toc;
                  
                     %--------------------------------------------------------
                     %DEFINE FORMAT AND PRINT OUTPUT
                     %--------------------------------------------------------
     
-                    format = '%s, %s, %f, %s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\n'; %19
+                    format = '%s, %s, %f, %s, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\n'; %19
     
                     % write a line for each obstacle they reported
                     % awareness of (6 obstacles total per trial) 
@@ -1219,11 +1229,11 @@ for this_trial=1:nTrials
                         if  trialMatrix.lateralized(this_trial) ==1
                             fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
                                trialMatrix.lateralized(this_trial), trialMatrix.side(this_trial), moves, mazeRT, obstaclenum,sVGC_right_mazes_lat(obstaclenum,trialMatrix.mazeNo(this_trial)), ...
-                                dVGC_right_mazes_lat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjectivereports(obstaclenum)); 
+                                dVGC_right_mazes_lat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjposorig(obstaclenum),subjectivereports(obstaclenum),SubjRT, TimeTrial); 
                         elseif  trialMatrix.lateralized(this_trial) ==0
                                fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
                                trialMatrix.lateralized(this_trial), trialMatrix.side(this_trial), moves, mazeRT, obstaclenum,sVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), ...
-                                dVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjectivereports(obstaclenum)); 
+                                dVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjposorig(obstaclenum),subjectivereports(obstaclenum), SubjRT, TimeTrial); 
 
                         end
                     end
