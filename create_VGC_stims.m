@@ -10,14 +10,14 @@ function create_VGC_stims
     data=struct2cell(data);
     mazes_lateralized= cellfun(@cell2mat, data, 'UniformOutput', false);
 
-    % which ones are left  2, 3, 4, 6, 7, 8, 10
+    % which ones are left  1,2,3,4,5,6,7,8,9,12
 
     % seperate out left right lateralized
     left_mazes= mazes_lateralized;
     right_mazes= mazes_lateralized;
 
-    right_mazes([2, 3, 4, 6, 7, 8, 10])= cellfun(@fliplr, mazes_lateralized([2, 3, 4, 6, 7, 8, 10]), 'UniformOutput', false);
-    left_mazes([2, 3, 4, 6, 7, 8, 10])= cellfun(@fliplr, mazes_lateralized([2, 3, 4, 6, 7, 8, 10]), 'UniformOutput', false);
+    right_mazes([1,2,3,4,5,6,7,8,9,12])= cellfun(@fliplr, mazes_lateralized([1,2,3,4,5,6,7,8,9,12]), 'UniformOutput', false);
+    left_mazes([1,2,3,4,5,6,7,8,9,12])= cellfun(@fliplr, mazes_lateralized([1,2,3,4,5,6,7,8,9,12]), 'UniformOutput', false);
     left_mazes= cellfun(@fliplr, left_mazes, 'UniformOutput', false);
 
     right_mazes_ud= cellfun(@flipud, right_mazes, 'UniformOutput', false);
