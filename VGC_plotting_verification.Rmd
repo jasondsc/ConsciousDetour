@@ -9,6 +9,20 @@ and test whether environmental entropy has an impact on the awareness of subsequ
 
 ```{r read in data}
 
+library(dplyr)
+
+maze_meta_data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=maze_meta_data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist),dVGC= mean(dynamic_vgc_weight), wall_dist= mean(walls_dist), center_dist= mean(center_dist))
+
+cor(temp$goal_dist, temp$dVGC)
+cor(temp$start_dist, temp$dVGC)
+cor(temp$wall_dist, temp$dVGC,method= 'spearman')
+cor(temp$center_dist, temp$dVGC,method= 'spearman')
+```
+
+```{r read in new mazes and test associations}
+
 library(ggplot2)
 
 maze_meta_data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/new_mazes_stats.csv')
@@ -45,6 +59,76 @@ ggplot(maze_meta_data, aes(x=lateralized, y= log10(dVGC), color=lateralized, fil
         labels=c("non-lateralized", "lateralized")) + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + scale_fill_manual(values=c('#B9E615', '#F36A17')) + geom_boxplot(width=0.1, colour= 'black', outliers = FALSE) 
 
 ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_dynamic_VGC.pdf', device = "pdf", width= 5, height =5)
+
+
+maze_lateralization = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/Summary_info_lateralized_grids.csv')
+
+
+maze_lateralization$Lateralized = plyr::mapvalues(maze_lateralization$Lateralized, c(0,1), c('non-lateralized', 'lateralized'))
+ggplot(maze_lateralization, aes(Effect, group= Lateralized, color= Lateralized, fill=Lateralized, alpha=0.5)) +
+  geom_histogram(aes( color= Lateralized, fill=Lateralized, group= Lateralized,), alpha= 0.5, bins = 20) +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "lateralized index", y = "number of mazes")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/hist_of_laterailzed_index_mazes.pdf', device = "pdf", width= 6, height =5)
+
+
+maze_meta_data$log10dVGC= maze_meta_data$dVGC
+
+BayesFactor::generalTestBF(log10dVGC ~ goal_dist*lateralized,  data=maze_meta_data, whichModels = "top")
+# weak evidence
+# below 1/10 strong in favour of effect
+
+BayesFactor::generalTestBF(log10dVGC ~ start_dist*lateralized,  data=maze_meta_data, whichModels = "top")
+
+BayesFactor::generalTestBF(log10dVGC ~ wall_dist*lateralized,  data=maze_meta_data, whichModels = "top")
+
+BayesFactor::generalTestBF(log10dVGC ~ center_dist*lateralized,  data=maze_meta_data, whichModels = "top")
+
+# all models return ambiguous evidence!!!! 
+
+
+# biggest effect is start distance  spearman rho of -0.33 but dose not interact with type of maze as seen in above analysis
+cor.test(maze_meta_data$goal_dist[maze_meta_data$lateralized==1], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==1]), method = 'spearman')
+
+cor.test(maze_meta_data$goal_dist[maze_meta_data$lateralized==0], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==0]), method = 'spearman')
+
+cor.test(maze_meta_data$start_dist[maze_meta_data$lateralized==0], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==0]), method = 'spearman')
+
+cor.test(maze_meta_data$start_dist[maze_meta_data$lateralized==1], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==1]), method = 'spearman')
+
+cor.test(maze_meta_data$wall_dist[maze_meta_data$lateralized==0], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==0]), method = 'spearman')
+
+cor.test(maze_meta_data$wall_dist[maze_meta_data$lateralized==1], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==1]), method = 'spearman')
+
+cor.test(maze_meta_data$center_dist[maze_meta_data$lateralized==0], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==0]), method = 'spearman')
+
+cor.test(maze_meta_data$center_dist[maze_meta_data$lateralized==1], log10(maze_meta_data$dVGC[maze_meta_data$lateralized==1]), method = 'spearman')
+
+
+ggplot(maze_meta_data, aes(x=goal_dist, y= log10(dVGC), color=lateralized, fill= lateralized))+  theme_classic() + xlab("") + geom_point(shape=21, color="white", size=5, position = jitter_pos, alpha=0.5)  + ylab("log 10 dynamic VGC") + xlab('distance to goal')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
+  stat_smooth(aes(color=lateralized, fill= lateralized), linetype = 'dashed', method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_goal_distance_dynamic_VGC.pdf', device = "pdf", width= 5, height =5)
+
+ggplot(maze_meta_data, aes(x=start_dist, y= log10(dVGC), color=lateralized, fill= lateralized))+  theme_classic() + xlab("") + geom_point(shape=21, color="white", size=5, position = jitter_pos, alpha=0.5)  + ylab("log 10 dynamic VGC") + xlab('distance to start')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
+  stat_smooth(aes(color=lateralized, fill= lateralized), linetype = 'dashed', method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_start_distance_dynamic_VGC.pdf', device = "pdf", width= 5, height =5)
+
+
+ggplot(maze_meta_data, aes(x=wall_dist, y= log10(dVGC), color=lateralized, fill= lateralized))+  theme_classic() + xlab("") + geom_point(shape=21, color="white", size=5, position = jitter_pos, alpha=0.5)  + ylab("log 10 dynamic VGC") + xlab('distance to walls')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
+  stat_smooth(aes(color=lateralized, fill= lateralized), linetype = 'dashed', method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_wall_distance_dynamic_VGC.pdf', device = "pdf", width= 5, height =5)
+
+
+ggplot(maze_meta_data, aes(x=center_dist, y= log10(dVGC), color=lateralized, fill= lateralized))+  theme_classic() + xlab("") + geom_point(shape=21, color="white", size=5, position = jitter_pos, alpha=0.5)  + ylab("log 10 dynamic VGC") + xlab('distance to centre')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
+  stat_smooth(aes(color=lateralized, fill= lateralized), linetype = 'dashed', method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_centre_distance_dynamic_VGC.pdf', device = "pdf", width= 5, height =5)
+
 
 ```
 
@@ -103,12 +187,12 @@ colnames(hamming_dist_mazes)= c('x', 'y', 'hamming_dist')
 library(ggplot2)
 
 ggplot(hamming_dist_mazes, aes(x, y, fill= hamming_dist)) + 
-  geom_tile() + scale_y_reverse()+  theme_void() + colorspace::scale_fill_continuous_sequential(palette= 'Lajolla', rev= FALSE, limits= c(0, 50)) + geom_hline(aes(yintercept = 24.5), colour = 'white') + geom_vline(aes(xintercept = 24.5), colour = 'white') + 
+  geom_tile() + scale_y_reverse()+  theme_void() + colorspace::scale_fill_continuous_sequential(palette= 'Lajolla', rev= FALSE, limits= c(0, 50)) + geom_hline(aes(yintercept = 12.5), colour = 'white') + geom_vline(aes(xintercept = 12.5), colour = 'white') + 
   theme(legend.key.height = unit(1, "cm"),
         legend.title = element_text(size = 12, angle = 270),
         legend.title.align = 0.5,
         legend.direction = "vertical", legend.text.position = 'right',
-        legend.title.position = 'right') + annotate("text", x = 13, y=-0.75, label = "lateralized") + annotate("text", x = 13+24, y=-0.75, label = "non-lateralized") + annotate("text", x = -0.75, y=13+24, label = "non-lateralized", angle = 90) + annotate("text", x = -0.75, y=13, label = "lateralized", angle = 90)
+        legend.title.position = 'right') + annotate("text", x = 7, y=-0.75, label = "lateralized") + annotate("text", x = 7+12, y=-0.75, label = "non-lateralized") + annotate("text", x = -0.75, y=7+12, label = "non-lateralized", angle = 90) + annotate("text", x = -0.75, y=7, label = "lateralized", angle = 90)
 
 ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_Hamming_distance_between_mazes.pdf', device = "pdf", width= 6, height =5)
 
