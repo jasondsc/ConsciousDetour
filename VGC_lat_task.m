@@ -11,19 +11,19 @@
 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
-%Screen('Preference', 'SkipSyncTests', 1); 
+Screen('Preference', 'SkipSyncTests', 1); 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 
 
 %% set up of experimental parameters 
-CurrentFrameRateHz=FrameRate(0);
-
-if (round(CurrentFrameRateHz)~=60)
-    disp('Screen refresh rate is not 60Hz. Plese adjust Screen refresh rate to 60 Hz!')
-    disp('check resolution')
-    return
-end
+% CurrentFrameRateHz=FrameRate(0);
+% 
+% if (round(CurrentFrameRateHz)~=60)
+%     disp('Screen refresh rate is not 60Hz. Plese adjust Screen refresh rate to 60 Hz!')
+%     disp('check resolution')
+%     return
+% end
 
 %EXPERIMENT INFORMATION
      
@@ -112,6 +112,9 @@ color_fixation(index_fix_temp) = {[1 1 1]};
 color_fixationtemp=color_fixation;
 color_fixation= reshape(color_fixation, [1, 11*11]);
 color_fixation= vertcat(color_fixation{:})';
+
+color_mask= color_fixation;
+color_mask(:, 1:2:121) = 0;
 
 % center fixation location (middle of center square) 
 center_fix_loc= [centerX-20 centerY-15; centerX+20 centerY-15; centerX, centerY-35; centerX, centerY+5]';
@@ -501,22 +504,23 @@ Screen(messageWindow,'TextSize'  , 30)
 Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle were you at any point?');
 Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-240, white);
 Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','You will respond on an 8 point scale like the one below:');
-Screen('DrawText',messageWindow,'You will respond on an 8 point scale like the one below:',centerX-(round(Width(3)/2)), centerY-160, white);
+Width=Screen(messageWindow,'TextBounds','You will respond on an 9 point scale like the one below:');
+Screen('DrawText',messageWindow,'You will respond on an 9 point scale like the one below:',centerX-(round(Width(3)/2)), centerY-160, white);
 
 % draw scale 
-                   scale_pos= [centerX-350, centerY+0; centerX+350, centerY+0; 
-                            centerX-350, centerY-40; centerX-350, centerY+40;
-                            centerX-250, centerY-40; centerX-250, centerY+40;
-                            centerX-150, centerY-40; centerX-150, centerY+40;
-                           centerX-50, centerY-40; centerX-50, centerY+40;
-                           centerX+50, centerY-40; centerX+50, centerY+40;
-                           centerX+150, centerY-40; centerX+150, centerY+40;
-                           centerX+250, centerY-40; centerX+250, centerY+40;
-                           centerX+350, centerY-40; centerX+350, centerY+40]';
+                   scale_pos= [centerX-400, centerY+0; centerX+400, centerY+0; 
+                               centerX-400, centerY-40; centerX-400, centerY+40; 
+                            centerX-300, centerY-40; centerX-300, centerY+40;
+                            centerX-200, centerY-40; centerX-200, centerY+40;
+                            centerX-100, centerY-40; centerX-100, centerY+40;
+                           centerX-0, centerY-40; centerX-0, centerY+40;
+                           centerX+100, centerY-40; centerX+100, centerY+40;
+                           centerX+200, centerY-40; centerX+200, centerY+40;
+                           centerX+300, centerY-40; centerX+300, centerY+40;
+                           centerX+400, centerY-40; centerX+400, centerY+40]';
 
 Screen('DrawLines',messageWindow,scale_pos, 10, black);
-head   = [ centerX-50, centerY-40 ]; % coordinates of head
+head   = [ centerX-0, centerY-40 ]; % coordinates of head
 width  = 20;           % width of arrow head
 points = [ head-[width,0]         % left corner
                head+[width,0]         % right corner
@@ -528,10 +532,10 @@ Screen('DrawText',messageWindow,'use the arrow keys to move the curser along the
 Width=Screen(messageWindow,'TextBounds','press space when you are ready to submit your answer');
 Screen('DrawText',messageWindow,'press space when you are ready to submit your answer',centerX-(round(Width(3)/2)), centerY+260, white);
 
-Width=Screen(messageWindow,'TextBounds','unaware');
-Screen('DrawText',messageWindow,'unaware',centerX-450-(round(Width(3)/2)), centerY, white);
-Width=Screen(messageWindow,'TextBounds','aware');
-Screen('DrawText',messageWindow,'aware',centerX+450-(round(Width(3)/2)), centerY, white);
+Width=Screen(messageWindow,'TextBounds','not a lot');
+Screen('DrawText',messageWindow,'not a lot',centerX-490-(round(Width(3)/2)), centerY, white);
+Width=Screen(messageWindow,'TextBounds','a lot');
+Screen('DrawText',messageWindow,'a lot',centerX+500-(round(Width(3)/2)), centerY, white);
 
 
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
@@ -655,7 +659,7 @@ for iptrial=1:nPracticeTrials
                      
                     %show grey Screen, 
                     Screen('DrawTexture',mainWin,GreyScreen);
-                        GreyWinTime=Screen('flip',mainWin);
+                    GreyWinTime=Screen('flip',mainWin);
 
                     %show Fixation
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
@@ -758,11 +762,17 @@ for iptrial=1:nPracticeTrials
                     end
 
                     % ask about subjective report now
-                    WaitSecs(0.3);
+                    Screen('FillRect',mainWin,color_mask ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
+                    Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+
 
                     for numobstacles =0:5 % index off bc of python
                          % start at random position of subj report scale not to bias participant response
-                         subjpos=randi([1 8], 1);
+                         %subjpos=randi([1 9], 1);
+                         subjpos=5;
                          subjposorig=subjpos;
     
                          % draw scale 
@@ -785,31 +795,32 @@ for iptrial=1:nPracticeTrials
                         Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                         Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                         
-                       scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
-                                centerX-350, centerY+270-30; centerX-350, centerY+270+30;
-                                centerX-250, centerY+270-30; centerX-250, centerY+270+30;
-                                centerX-150, centerY+270-30; centerX-150, centerY+270+30;
-                               centerX-50, centerY+270-30; centerX-50, centerY+270+30;
-                               centerX+50, centerY+270-30; centerX+50, centerY+270+30;
-                               centerX+150, centerY+270-30; centerX+150, centerY+270+30;
-                               centerX+250, centerY+270-30; centerX+250, centerY+270+30;
-                               centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
+                       scale_pos= [centerX-400, centerY+270; centerX+400, centerY+270; 
+                           centerX-400, centerY+270-30; centerX-400, centerY+270+30; 
+                                centerX-300, centerY+270-30; centerX-300, centerY+270+30;
+                                centerX-200, centerY+270-30; centerX-200, centerY+270+30;
+                                centerX-100, centerY+270-30; centerX-100, centerY+270+30;
+                               centerX-0, centerY+270-30; centerX-0, centerY+270+30;
+                               centerX+100, centerY+270-30; centerX+100, centerY+270+30;
+                               centerX+200, centerY+270-30; centerX+200, centerY+270+30;
+                               centerX+300, centerY+270-30; centerX+300, centerY+270+30;
+                               centerX+400, centerY+270-30; centerX+400, centerY+270+30]';
                             
                             Screen('DrawLines',mainWin,scale_pos, 10, black);
-                            head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
+                            head   = [ (centerX+ ((800/8) * (subjpos- 5))), centerY+270-40 ]; % coordinates of head
                             width  = 20;           % width of arrow head
                             points = [ head-[width,0]         % left corner
                                            head+[width,0]         % right corner
                                            head+[0,width] ];      % vertex
                             Screen('FillPoly', mainWin, white, points);
                             
-                            Width=Screen(mainWin,'TextBounds','unaware');
-                            Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
-                            Width=Screen(mainWin,'TextBounds','aware');
-                            Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                            Width=Screen(mainWin,'TextBounds','not a lot');
+                            Screen('DrawText',mainWin,'not a lot',centerX-490-(round(Width(3)/2)), centerY+270, white);
+                            Width=Screen(mainWin,'TextBounds','a lot');
+                            Screen('DrawText',mainWin,'a lot',centerX+500-(round(Width(3)/2)), centerY+270, white);
                             Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
                             Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
-                            SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+                            SubjWinTime= Screen('flip',mainWin,mazeRT + (31*IFI) - slack,0);
     
                             subjreported=1;
                             KbReleaseWait;
@@ -820,9 +831,9 @@ for iptrial=1:nPracticeTrials
                                [keyIsDown,secs,keyCode]=KbCheck;
                                  if keyIsDown==1
                                      keyCode= find(keyCode==1);
-                                     if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                     if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 10
                                          subjpos= subjpos-1;
-                                     elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                     elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 10
                                           subjpos= subjpos+1;
                                      elseif  keyCode(1) == 32 
                                          subjreported=0;
@@ -840,17 +851,17 @@ for iptrial=1:nPracticeTrials
                             Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
     
                             Screen('DrawLines',mainWin,scale_pos, 10, black);
-                            head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
+                            head   = [ (centerX+ ((800/8) * (subjpos-5))), centerY+270-40 ]; % coordinates of head
                             width  = 20;           % width of arrow head
                             points = [ head-[width,0]         % left corner
                                            head+[width,0]         % right corner
                                            head+[0,width] ];      % vertex
                             Screen('FillPoly', mainWin, white, points);
                             
-                            Width=Screen(mainWin,'TextBounds','unaware');
-                            Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
-                            Width=Screen(mainWin,'TextBounds','aware');
-                            Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                            Width=Screen(mainWin,'TextBounds','not a lot');
+                            Screen('DrawText',mainWin,'not a lot',centerX-490-(round(Width(3)/2)), centerY+270, white);
+                            Width=Screen(mainWin,'TextBounds','a lot');
+                            Screen('DrawText',mainWin,'a lot',centerX+500-(round(Width(3)/2)), centerY+270, white);
                             Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
                             Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
                             SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
@@ -1106,10 +1117,17 @@ for this_trial=1:nTrials
                     end
 
                     % ask about subjective report now
-                    WaitSecs(0.3);
+
+                    % add fixation to avoid after images
+                    Screen('FillRect',mainWin,color_mask ,stim_loc');
+                    Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
+                    Screen('DrawLines',mainWin,center_fix_loc, 7, white);
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
+                    Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
 
                     for numobstacles =0:5 % index off bc of python
-                    subjpos=randi([1 8], 1); % start at random position 
+                    %subjpos=randi([1 9], 1); % start at random position 
+                    subjpos=5;
                     subjposorig(numobstacles+1)= subjpos;
 
                      % draw scale 
@@ -1131,31 +1149,32 @@ for this_trial=1:nTrials
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
                     
-                   scale_pos= [centerX-350, centerY+270; centerX+350, centerY+270; 
-                            centerX-350, centerY+270-30; centerX-350, centerY+270+30;
-                            centerX-250, centerY+270-30; centerX-250, centerY+270+30;
-                            centerX-150, centerY+270-30; centerX-150, centerY+270+30;
-                           centerX-50, centerY+270-30; centerX-50, centerY+270+30;
-                           centerX+50, centerY+270-30; centerX+50, centerY+270+30;
-                           centerX+150, centerY+270-30; centerX+150, centerY+270+30;
-                           centerX+250, centerY+270-30; centerX+250, centerY+270+30;
-                           centerX+350, centerY+270-30; centerX+350, centerY+270+30]';
+                       scale_pos= [centerX-400, centerY+270; centerX+400, centerY+270; 
+                           centerX-400, centerY+270-30; centerX-400, centerY+270+30; 
+                                centerX-300, centerY+270-30; centerX-300, centerY+270+30;
+                                centerX-200, centerY+270-30; centerX-200, centerY+270+30;
+                                centerX-100, centerY+270-30; centerX-100, centerY+270+30;
+                               centerX-0, centerY+270-30; centerX-0, centerY+270+30;
+                               centerX+100, centerY+270-30; centerX+100, centerY+270+30;
+                               centerX+200, centerY+270-30; centerX+200, centerY+270+30;
+                               centerX+300, centerY+270-30; centerX+300, centerY+270+30;
+                               centerX+400, centerY+270-30; centerX+400, centerY+270+30]';
                         
                         Screen('DrawLines',mainWin,scale_pos, 10, black);
-                        head   = [ (centerX+ ((800/8) * (subjpos- 4.5))), centerY+270-40 ]; % coordinates of head
+                        head   = [ (centerX+ ((800/8) * (subjpos- 5))), centerY+270-40 ]; % coordinates of head
                         width  = 20;           % width of arrow head
                         points = [ head-[width,0]         % left corner
                                        head+[width,0]         % right corner
                                        head+[0,width] ];      % vertex
                         Screen('FillPoly', mainWin, white, points);
                         
-                        Width=Screen(mainWin,'TextBounds','unaware');
-                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY+340, white);
-                        Width=Screen(mainWin,'TextBounds','aware');
-                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','not a lot');
+                        Screen('DrawText',mainWin,'not a lot',centerX-490-(round(Width(3)/2)), centerY+270, white);
+                        Width=Screen(mainWin,'TextBounds','a lot');
+                        Screen('DrawText',mainWin,'a lot',centerX+500-(round(Width(3)/2)), centerY+270, white);
                         Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
                         Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
-                        SubjWinTime= Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
+                        SubjWinTime= Screen('flip',mainWin,mazeRT + (31*IFI) - slack,0);
 
                         subjreported=1;
                         KbReleaseWait;
@@ -1164,9 +1183,9 @@ for this_trial=1:nTrials
                            [keyIsDown,secs,keyCode]=KbCheck;
                             if keyIsDown==1
                                  keyCode= find(keyCode==1);
-                                 if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 9
+                                 if keyCode(1) == 37 &&  subjpos-1 > 0 &&  subjpos-1 < 10
                                      subjpos= subjpos-1;
-                                 elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 9
+                                 elseif keyCode(1) == 39 &&  subjpos+1 > 0 && subjpos+1 < 10
                                       subjpos= subjpos+1;
                                  elseif  keyCode(1) == 32 
                                      subjreported=0;
@@ -1185,17 +1204,17 @@ for this_trial=1:nTrials
                         Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
 
                         Screen('DrawLines',mainWin,scale_pos, 10, black);
-                        head   = [ (centerX+ ((800/8) * (subjpos-4.5))), centerY+270-40 ]; % coordinates of head
+                        head   = [ (centerX+ ((800/8) * (subjpos-5))), centerY+270-40 ]; % coordinates of head
                         width  = 20;           % width of arrow head
                         points = [ head-[width,0]         % left corner
                                        head+[width,0]         % right corner
                                        head+[0,width] ];      % vertex
                         Screen('FillPoly', mainWin, white, points);
                         
-                        Width=Screen(mainWin,'TextBounds','unaware');
-                        Screen('DrawText',mainWin,'unaware',centerX-450-(round(Width(3)/2)), centerY +340, white);
-                        Width=Screen(mainWin,'TextBounds','aware');
-                        Screen('DrawText',mainWin,'aware',centerX+450-(round(Width(3)/2)), centerY+340, white);
+                        Width=Screen(mainWin,'TextBounds','not a lot');
+                        Screen('DrawText',mainWin,'not a lot',centerX-490-(round(Width(3)/2)), centerY +270, white);
+                        Width=Screen(mainWin,'TextBounds','a lot');
+                        Screen('DrawText',mainWin,'a lot',centerX+500-(round(Width(3)/2)), centerY+270, white);
                         Width=Screen(mainWin,'TextBounds','Press the spacebar to submit');
                         Screen('DrawText',mainWin,'Press the spacebar to submit',centerX-(round(Width(3)/2)), centerY+380, white);
                         SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
@@ -1233,7 +1252,7 @@ for this_trial=1:nTrials
                         elseif  trialMatrix.lateralized(this_trial) ==0
                                fprintf(fid,format,subjectID,Gender,Age,experiment,handiness,this_trial,trialMatrix.mazeNo(this_trial), ...
                                trialMatrix.lateralized(this_trial), trialMatrix.side(this_trial), moves, mazeRT, obstaclenum,sVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), ...
-                                dVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjposorig(obstaclenum),subjectivereports(obstaclenum), SubjRT, TimeTrial); 
+                               dVGC_orig_mazes_nonlat(obstaclenum,trialMatrix.mazeNo(this_trial)), subjposorig(obstaclenum),subjectivereports(obstaclenum), SubjRT, TimeTrial); 
 
                         end
                     end
