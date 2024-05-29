@@ -199,26 +199,355 @@ ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/
 ```
 
 
+```{r check lateralization of original experiment 1}
 
-```{r entropy}
+# original experiment with awareness probes 
 
-json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+library(dplyr)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+dictionary_of_maze=unique(unlist(strsplit(maze_stats$grid, '-0')))[2:17]
+dictionary_of_maze[1] = 'grid-0'
+
+maze_stats=maze_stats[!is.na(maze_stats$side),]
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+# make sure the two model predictions are related!
+cor.test(latmazes$lat_dVGC, latmazes$lat_sVGC)
+
+index_mazes=paste(data$grid, data$obstacle)
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_sVGC))
 
 
-entropy_maze <- function(maze, n, m){
-  m=11
-  n=11
-  sum_dot=stringr::str_count(paste(unlist(maze),collapse=""), "\\.")
-  
-  sum_not= (m*n)-sum_dot
-  
-  entropy=((-(sum_dot)/(m*n))* log2((sum_dot)/(m*n)))- (((sum_dot)/(m*n))* log2((sum_dot)/(m*n)))
-  return(entropy)
-}
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
 
-entropy_maze(json_data[["grid-0-0"]], 11, 11)
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# trending effect but non-significant! 
 
 
+
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# no effect! 
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=7)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=7)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=7)
+
+data_plot$lat_sVGC_scaled = factor(round(data_plot$lat_sVGC,2), levels = sort(unique(round(data_plot$lat_sVGC,2))) )
+data_plot$lat_dVGC_scaled = factor(round(data_plot$lat_dVGC,2), levels = sort(unique(round(data_plot$lat_dVGC,2))) )
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_sVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC_scaled, fill= lat_sVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_dVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_awareness, color=lat_dVGC_scaled, fill= lat_dVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_interaction_plot_continuous_lateralized_dVGC.pdf', device = "pdf", width= 6, height =5)
 
 
 ```
+
+
+
+```{r check lateralization of original experiment 2}
+
+#expriment with awareness probes, but obstacles disapear after participants starts to move
+
+library(dplyr)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_2_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+dictionary_of_maze=unique(unlist(strsplit(maze_stats$grid, '-0')))[2:17]
+dictionary_of_maze[1] = 'grid-0'
+
+maze_stats=maze_stats[!is.na(maze_stats$side),]
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+# make sure the two model predictions are related!
+cor.test(latmazes$lat_dVGC, latmazes$lat_sVGC)
+
+index_mazes=paste(data$grid, data$obstacle)
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_sVGC))
+
+
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# non-significant! 
+
+
+
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# no effect! 
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=7)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=7)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=7)
+
+data_plot$lat_sVGC_scaled = factor(round(data_plot$lat_sVGC,2), levels = sort(unique(round(data_plot$lat_sVGC,2))) )
+data_plot$lat_dVGC_scaled = factor(round(data_plot$lat_dVGC,2), levels = sort(unique(round(data_plot$lat_dVGC,2))) )
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_sVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC_scaled, fill= lat_sVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_dVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_awareness, color=lat_dVGC_scaled, fill= lat_dVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_interaction_plot_continuous_lateralized_dVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+```
+
+
+
+
+# cant fit experiment 3 bc critical mazes have no variance asscoitaed with lateralization (3 levels for dVGC and 2 sVGC)
+
+# let us skip straight to exp 4 which uses all mazes 
+
+
+
+```{r check lateralization of original experiment 4}
+
+#expriment with awareness probes, but obstacles disapear after participants starts to move
+
+library(dplyr)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_4a_ht_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+dictionary_of_maze=unique(unlist(strsplit(maze_stats$grid, '-0')))[2:17]
+dictionary_of_maze[1] = 'grid-0'
+
+maze_stats=maze_stats[!is.na(maze_stats$side),]
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+# make sure the two model predictions are related!
+cor.test(latmazes$lat_dVGC, latmazes$lat_sVGC)
+
+index_mazes=paste(data$grid, data$obstacle)
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$lat_sVGC))
+
+
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+
+# need to add subject intercept!!
+lm0= lmer(log_hoverduration ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+# need to add subject intercept!!
+lm0= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z, data= data)
+lm2= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(log_hoverduration ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+
+
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(log_hoverduration ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+lm0= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(log_hoverduration ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z, data= data)
+lm2= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z + lat_dVGC_scaled, data= data)
+lm3= lmer(log_hoverduration ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + dynamic_vgc_weight_Z * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# no effect now but trending! 
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_hovdur= mean(log_hoverduration, na.rm= TRUE), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid) %>% summarise(mean_hovdur= mean(mean_hovdur, na.rm= TRUE), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_hovdur= data_plot$mean_hovdur-  rep(temp$mean_hovdur, each=7)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=7)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=7)
+
+data_plot$lat_sVGC_scaled = factor(round(data_plot$lat_sVGC,2), levels = sort(unique(round(data_plot$lat_sVGC,2))) )
+data_plot$lat_dVGC_scaled = factor(round(data_plot$lat_dVGC,2), levels = sort(unique(round(data_plot$lat_dVGC,2))) )
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_sVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_hovdur, color=lat_sVGC_scaled, fill= lat_sVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment4a_interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_dVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_hovdur, color=lat_dVGC_scaled, fill= lat_dVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment4a_interaction_plot_continuous_lateralized_dVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+```
+

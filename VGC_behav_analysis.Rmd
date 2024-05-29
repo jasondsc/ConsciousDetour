@@ -5,16 +5,20 @@ date: "2024-05-22"
 ---
 
 
+# run terminal command: 
+
+cat ~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/0*.csv >> ~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/allDataConcatnated.csv
+
 ```{r read in behav data & plot hist of aware reports}
 
 library(dplyr)
 library(ggplot2)
-data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/000MM.csv')
+data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/allDataConcatnated.csv')
 
 
 # plot hist of static VGSC
 
-data$Aware.ReportObs.scaled= plyr::mapvalues(data$Aware.ReportObs, c(1,2,3,4,0,5,6,7,8), c(0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1))
+data$Aware.ReportObs.scaled= plyr::mapvalues(data$Aware.ReportObs, c(1,2,3,4,5,6,7,8,9), c(0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1))
 
 data$Lateralized.factor= plyr::mapvalues(data$Lateralized, c(0,1), c('non-lateralized', 'lateralized'))
 
@@ -96,7 +100,6 @@ ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilo
 
 ```{r test for nuissance covariates}
 
-library(lme4)
 
 maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/new_mazes_stats.csv')
 maze_stats=rbind(maze_stats,maze_stats)
@@ -158,8 +161,6 @@ ggplot(AICplot, aes(x=lesionedVar, y=AIC,width=.5 )) + geom_bar(stat = "identity
 
 
 
-
-
 # lesioning of AIC
 lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore * Lateralized.zscore, data= data)
 lm3.1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore + Lateralized.zscore, data= data)
@@ -181,5 +182,95 @@ AIC(lm3.1) - AIC(lm3.7))
 AICplot= data.frame(AIC= AIC_lesion, lesionedVar= factor(c('sVGC*Lateralized', 'Lateralized', 'sVGC', 'center distance', 'wall distance', 'start distance', 'goal distance'), levels = c('sVGC*Lateralized', 'Lateralized', 'sVGC', 'center distance', 'wall distance', 'start distance', 'goal distance')))
 
 ggplot(AICplot, aes(x=lesionedVar, y=AIC,width=.5 )) + geom_bar(stat = "identity", position=position_dodge(width = 0.5)) + ggpubr::theme_classic2() + scale_color_manual(values='#F36A17') + labs(y="delta AIC", x="lesioned parameter",title="") + theme(text = element_text(size=15), legend.title=element_blank(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+```{r compute lateralized effect continuous}
+
+library(dplyr)
+data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/000JC.csv')
+data$grid= data$MazeID-1
+data$grid[data$grid>=12] = data$grid[data$grid>=12]-12
+data$Aware.ReportObs.scaled= plyr::mapvalues(data$Aware.ReportObs, c(1,2,3,4,5,6,7,8,9), c(0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/new_mazes_stats.csv')
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+dictionary_of_maze=unique(paste(maze_stats$lateralized, as.numeric(substr(maze_stats$grid, 7,8))))
+
+# make sure the two model predictions are related!
+cor.test(latmazes$lat_dVGC, latmazes$lat_sVGC)
+
+data$grid= data$MazeID-1
+data$grid[data$grid>=12] = data$grid[data$grid>=12]-12
+
+index_mazes=paste(data$Lateralized, data$grid)
+
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, latmazes$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, latmazes$lat_sVGC))
+
+
+data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
+data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+
+# need to add subject intercept!!
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID), data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + sVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + sVGC.Obs.zscore + lat_sVGC_scaled, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + sVGC.Obs.zscore * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# significant lateralization effect!!! 
+# this means that beyond the binary categories of lateralization, the relative amount 
+# need to add subject intercept!!
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID), data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + dVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + dVGC.Obs.zscore + lat_dVGC_scaled, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + dVGC.Obs.zscore * lat_dVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# significant lateralization effect!!! 
+# this means that beyond the binary categories of lateralization, the relative amount 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, Lateralized, Obs.No) %>% summarise(mean_awareness= mean(Aware.ReportObs), mean_sVGC= mean(sVGC.Obs), mean_dVGC= mean(dVGC.Obs),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid, Lateralized) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=6)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=6)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=6)
+
+data_plot$lat_sVGC_scaled = factor(round(data_plot$lat_sVGC,2), levels = sort(unique(round(data_plot$lat_sVGC,2))) )
+data_plot$lat_dVGC_scaled = factor(round(data_plot$lat_dVGC,2), levels = sort(unique(round(data_plot$lat_dVGC,2))) )
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_sVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC_scaled, fill= lat_sVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+x <- seq(0, 1, length.out = length(unique(data_plot$lat_dVGC_scaled)))
+pallete_man= c(scales::seq_gradient_pal(high = '#F36A17', low= '#B9E615')(x))
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_awareness, color=lat_dVGC_scaled, fill= lat_dVGC_scaled))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= FALSE, fullrange = T) +  scale_color_manual(values = pallete_man) + scale_fill_manual(values = pallete_man)
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/interaction_plot_continuous_lateralized_dVGC.pdf', device = "pdf", width= 6, height =5)
+
 
 ```
