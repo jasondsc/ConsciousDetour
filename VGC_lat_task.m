@@ -42,6 +42,8 @@ experiment = 'VGC_lat_behav';
 % Call function to update Maze stims
 create_VGC_stims()
 
+reset(RandStream.getGlobalStream,sum(100*clock));
+
 % colour gradient from green to yellow 
 cMap = interp1([0;1],[0 1 0; 1 1 0],linspace(0,1,256));
 
