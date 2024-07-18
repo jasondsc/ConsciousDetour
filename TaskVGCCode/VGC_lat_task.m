@@ -1277,7 +1277,7 @@ for this_trial=1:nTrials
                     % BLOCK CHECK
                     %------------------------------------------------------------
     
-                    if (itrial < nTrials) && (mod(itrial,24)==0)
+                    if (itrial < nTrials) && (mod(itrial,16)==0)
     
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
