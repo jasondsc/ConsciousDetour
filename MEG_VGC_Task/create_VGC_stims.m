@@ -1,0 +1,131 @@
+
+
+function create_VGC_stims
+
+    %% read in mazes from json file and seperate them into workable cell arrays
+    % this snippet of code reads in the mazes
+    fileName = './mazes/mazes_Lateralized.json'; % filename in JSON extension
+    str = fileread(fileName); % dedicated for reading files as text
+    data = jsondecode(str); % Using the jsondecode function to parse JSON from string
+    data=struct2cell(data);
+    mazes_lateralized= cellfun(@cell2mat, data, 'UniformOutput', false);
+
+    % ALL mazes are left oriented
+
+    % seperate out left right lateralized
+    left_mazes= mazes_lateralized;
+    right_mazes= mazes_lateralized;
+
+    right_mazes= cellfun(@fliplr, mazes_lateralized, 'UniformOutput', false);
+
+    right_mazes_ud= cellfun(@flipud, right_mazes, 'UniformOutput', false);
+    left_mazes_ud= cellfun(@flipud, left_mazes, 'UniformOutput', false);
+
+    right_mazes_lat= [right_mazes;right_mazes_ud];
+
+    left_mazes_lat =[left_mazes; left_mazes_ud];
+
+
+    % repreat for non-lateralized maze
+    fileName = './mazes/mazes_Nonlateralized.json'; % filename in JSON extension
+    str = fileread(fileName); % dedicated for reading files as text
+    data = jsondecode(str); % Using the jsondecode function to parse JSON from string
+    data=struct2cell(data);
+    mazes_nonlateralized= cellfun(@cell2mat, data, 'UniformOutput', false);
+
+    flipped= cellfun(@fliplr, mazes_nonlateralized, 'UniformOutput', false);
+    mazes_ud= cellfun(@flipud, mazes_nonlateralized, 'UniformOutput', false);
+    flipped_mazes_ud= cellfun(@flipud, flipped, 'UniformOutput', false);
+
+   stats=readtable('./mazes/Lateralized_mazes_stats.csv');
+
+    % when we see side ==2 this means original, side ==1 inverted LR
+    orig_mazes_nonlat= [mazes_nonlateralized;mazes_ud]; 
+    flipped_mazes_nonlat= [flipped; flipped_mazes_ud];
+
+    obsstr= ['0', '1', '2', '3', '4', '5'];
+
+    statslat=  [stats(1:72,:); stats(1:72,:)];
+    statsnonlat=  [stats(73:144,:); stats(73:144,:)];
+
+    %% convert mazes to RGB
+
+    for i=1:24
+
+        temp=right_mazes_lat{i};
+        tempint= cell(11,11);
+        tempint(temp == '.') = {[1,1,1]};
+        tempint(temp == '#') = {[0,0,0]};
+        tempint(temp == 'G') = {[0,1,0]};
+        tempint(temp == 'S') = {[0,1,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        stim_right_mazes_lat{i,1} = tempint;
+
+         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+         rel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         irrel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+
+        temp=left_mazes_lat{i};
+        tempint= cell(11,11);
+        tempint(temp == '.') = {[1,1,1]};
+        tempint(temp == '#') = {[0,0,0]};
+        tempint(temp == 'G') = {[0,1,0]};
+        tempint(temp == 'S') = {[0,1,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        stim_left_mazes_lat{i,1} = tempint;
+
+         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+         rel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         irrel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+
+        temp=orig_mazes_nonlat{i};
+        tempint= cell(11,11);
+        tempint(temp == '.') = {[1,1,1]};
+        tempint(temp == '#') = {[0,0,0]};
+        tempint(temp == 'G') = {[0,1,0]};
+        tempint(temp == 'S') = {[0,1,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        stim_orig_mazes_nonlat{i,1} = tempint;
+
+         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+         rel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         irrel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+        temp=flipped_mazes_nonlat{i};
+        tempint= cell(11,11);
+        tempint(temp == '.') = {[1,1,1]};
+        tempint(temp == '#') = {[0,0,0]};
+        tempint(temp == 'G') = {[0,1,0]};
+        tempint(temp == 'S') = {[0,1,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        stim_flipped_mazes_nonlat{i,1} = tempint;
+
+         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+         rel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+        irrel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+    end
+
+    sVGC_right_mazes_lat= reshape([stats.sVGC(1:72); stats.sVGC(1:72)]', [6,24]);
+    sVGC_orig_mazes_nonlat= reshape([stats.sVGC(73:end); stats.sVGC(73:end)]', [6,24]);
+    dVGC_right_mazes_lat= reshape([stats.dVGC(1:72); stats.dVGC(1:72)]', [6,24]);
+    dVGC_orig_mazes_nonlat=  reshape([stats.dVGC(73:end); stats.dVGC(73:end)]', [6,24]);
+    
+    save('./StimMazes_RGB_4_Matlab.mat', ...
+        'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat',...
+        'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat', ...
+        'dVGC_orig_mazes_nonlat',"dVGC_right_mazes_lat" , 'sVGC_orig_mazes_nonlat', 'sVGC_right_mazes_lat', ...
+        "rel_flipped_mazes_lat", "rel_orig_mazes_lat","rel_left_mazes_lat", "rel_right_mazes_lat", ...
+        "irrel_flipped_mazes_lat", "irrel_orig_mazes_lat","irrel_left_mazes_lat", "irrel_right_mazes_lat" )
+
+end
