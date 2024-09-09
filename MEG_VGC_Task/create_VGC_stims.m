@@ -1,5 +1,4 @@
 
-
 function create_VGC_stims
 
     %% read in mazes from json file and seperate them into workable cell arrays
@@ -58,13 +57,14 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_right_mazes_lat{i,1} = tempint;
 
-         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+        indextaskrel= obsstr(ind(5:6));
          rel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
-         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         indextaskrel= obsstr(ind(1:2));
          irrel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
 
@@ -74,13 +74,14 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_left_mazes_lat{i,1} = tempint;
 
-         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+          indextaskrel= obsstr(ind(5:6));
          rel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
-         indextaskrel=obsstr(statslat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         indextaskrel= obsstr(ind(1:2));
          irrel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
 
@@ -90,13 +91,14 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_orig_mazes_nonlat{i,1} = tempint;
 
-         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+         indextaskrel= obsstr(ind(5:6));
          rel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
-         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+         indextaskrel= obsstr(ind(1:2));
          irrel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
         temp=flipped_mazes_nonlat{i};
@@ -105,13 +107,14 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_flipped_mazes_nonlat{i,1} = tempint;
 
-         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) >=0.5);
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+        indextaskrel= obsstr(ind(5:6));
          rel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
-         indextaskrel=obsstr(statsnonlat.sVGC( ((6*(i-1))+1):((6*(i-1))+6)) <0.5);
+        indextaskrel= obsstr(ind(1:2));
         irrel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
     end
