@@ -446,7 +446,17 @@ Screen('DrawText',messageWindow,'VGC behavioural task',centerX-(round(Width(3)/2
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continute');
 Screen('DrawText',messageWindow,'Press the Spacebar to Continute',centerX-(round(Width(3)/2))+centerXhalf, centerY+centerYhalf+150, white);
 
-Screen('DrawTexture',mainWin,messageWindow);
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
+Screen('DrawTexture',mainWin,messageWindow);   
 Screen('Flip',mainWin)
            
 while 1
@@ -481,7 +491,17 @@ Screen('DrawText',messageWindow,'Please Make Sure That CAPS is OFF',centerX-(rou
 Width=Screen(messageWindow,'TextBounds','Press the Spacebar to Continute');
 Screen('DrawText',messageWindow,'Press the Spacebar to Continute',centerX-(round(Width(3)/2))+centerXhalf, centerY+centerYhalf+150, white);
 
-Screen('DrawTexture',mainWin,messageWindow);
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
+Screen('DrawTexture',mainWin,messageWindow);   
 Screen('Flip',mainWin)
 
 while 1
@@ -578,20 +598,27 @@ Screen('FrameRect',messageWindow,black ,stim_loc4', 0.5  );
 Screen('DrawLines',messageWindow,center_fix_loc4, 7, white);
 Screen('DrawDots', messageWindow, [centerX+centerXhalf, centerY+centerYhalf-15], 7, black, [], 2)
 
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-centerXhalf-(round(Width(3)/2)),centerY-centerYhalf+230, white);
 Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
 
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX+centerXhalf-(round(Width(3)/2)),centerY-centerYhalf+230, white);
 Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
 
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-centerXhalf-(round(Width(3)/2)),centerY+centerYhalf+230, white);
 Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
 
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX+centerXhalf-(round(Width(3)/2)),centerY+centerYhalf+230, white);
@@ -673,6 +700,16 @@ Screen('DrawText',messageWindow,'BEWARE of obstacles in blue',centerX-(round(Wid
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf,centerY+230+ centerYhalf, white);
 
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -750,6 +787,16 @@ Screen('DrawText',messageWindow,'REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf,centerY+230+centerYhalf, white);
 
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -811,6 +858,17 @@ Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))-centerXhalf,centerY+230+centerYhalf, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf,centerY+230+centerYhalf, white);
+
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -881,6 +939,17 @@ Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))-centerXhalf, centerY+230+centerYhalf, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf, centerY+230+centerYhalf, white);
+
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -993,6 +1062,17 @@ Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))-centerXhalf, centerY+230+centerYhalf, white);
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf, centerY+230+centerYhalf, white);
+
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
 
@@ -1038,6 +1118,16 @@ Screen('DrawText',messageWindow,'You will now perform 5 practice trials',centerX
 Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
 Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2))+centerXhalf, centerY+230+centerYhalf, white);
 
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -1060,6 +1150,17 @@ Width=Screen(messageWindow,'TextBounds','Press the spacebar to start practice');
 Screen('DrawText',messageWindow,'Press the spacebar to start practice',centerX-(round(Width(3)/2))-centerXhalf, centerY+centerYhalf, white);
 Width=Screen(messageWindow,'TextBounds','Press the spacebar to start practice');
 Screen('DrawText',messageWindow,'Press the spacebar to start practice',centerX-(round(Width(3)/2))+centerXhalf, centerY+centerYhalf, white);
+
+Screen('FillRect',messageWindow,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',messageWindow,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',messageWindow,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',messageWindow,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
 Screen('DrawTexture',mainWin,messageWindow);
 Screen('Flip',mainWin)
            
@@ -1107,7 +1208,6 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
 %-------------------------------------------------------------------------------------------
 %DISPLAY PREPARATION AND ORGANIZATION OF FIXATION
 %------------------------------------------------------------------------------------------
-
                 %--------------------------------------------------------------------
                 %STREAM LOOP AND COLLECT RESPONSE
                 %--------------------------------------------------------------------                        
@@ -1164,6 +1264,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                      
                     %show grey Screen, 
                     Screen('DrawTexture',mainWin,GreyScreen);
+
+                         Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
                     GreyWinTime=Screen('flip',mainWin);
 
                     %show Fixation
@@ -1186,6 +1296,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                     Screen('FrameRect',mainWin,black ,stim_loc4', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                     Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
+
+                         Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
                     FixationWinTime=Screen('flip',mainWin,GreyWinTime + (FixOffSOA*IFI) - slack,0); 
 
                     %show Fixation
@@ -1208,6 +1328,17 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                     Screen('FrameRect',mainWin,black ,stim_loc4', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                     Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
+
+     Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
                     FixationWinTime=Screen('flip',mainWin,FixationWinTime + (120*IFI) - slack,0); 
 
                     %% FLICKER
@@ -1259,6 +1390,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                         Screen('FillRect',mainWin, planningphase_irrel{f+3} ,stim_loc4(index_irrelv,:)');
                         Screen('FrameRect',mainWin,black ,stim_loc4(index_irrelv,:)', 0.5  );
 
+Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
                         Screen('flip',mainWin,FixationWinTime + (1*IFI) - slack,0);
                      end
 
@@ -1282,6 +1423,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                     Screen('FrameRect',mainWin,black ,stim_loc4', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                     Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
+
+Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
      
                     StimulusOffsetWinTime= Screen('flip',mainWin,FixationWinTime + (1*IFI) - slack,0);
              
@@ -1307,6 +1458,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                     Screen('FrameRect',mainWin,black ,stim_loc4', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                     Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
+
+Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]);        
 
                     ResponseWinTime= Screen('flip',mainWin,StimulusOffsetWinTime + (120*IFI) - slack,0);
 
@@ -1392,6 +1553,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                         Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                         Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
 
+                              Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+                            Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+                         Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
+
                         Screen('flip',mainWin,ResponseWinTime + (1*IFI) - slack,0);
 
                         % break loop if solved
@@ -1424,6 +1595,16 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                     Screen('DrawLines',mainWin,center_fix_loc4, 7, white);
                     Screen('DrawDots', mainWin, [centerX+centerXhalf, centerY-15+centerYhalf], 7, black, [], 2)
 
+
+                              Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+                            Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+                         Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
                     Screen('flip',mainWin,mazeRT + (1*IFI) - slack,0);
 
                     for numobstacles =0:5 % index off bc of python
@@ -1526,6 +1707,15 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                             Width=Screen(mainWin,'TextBounds','a lot');
                             Screen('DrawText',mainWin,'a lot',centerX+240-(round(Width(3)/2))+centerXhalf, centerY+200+centerYhalf, white);
 
+                              Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+                            Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+                         Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
                             SubjWinTime= Screen('flip',mainWin,mazeRT + (31*IFI) - slack,0);
     
                             subjreported=1;
@@ -1627,6 +1817,17 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                             Screen('DrawText',mainWin,'not a lot',centerX-260-(round(Width(3)/2))+centerXhalf, centerY+200+centerYhalf, white);
                             Width=Screen(mainWin,'TextBounds','a lot');
                             Screen('DrawText',mainWin,'a lot',centerX+240-(round(Width(3)/2))+centerXhalf, centerY+200+centerYhalf, white);
+
+
+                              Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940;520+yCenter;960;540+yCenter]); 
+                            Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520+yCenter;960+xCenter;540+yCenter]); 
+
+                            Screen('FillRect',mainWin,[0 0 0],[0;520;20;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520;20+xCenter;540]); 
+                        Screen('FillRect',mainWin,[0 0 0],[0;520+yCenter;20;540+yCenter]); 
+                         Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]); 
 
                             SubjWinTime= Screen('flip',mainWin,SubjWinTime + (1*IFI) - slack,0);
                             WaitSecs(0.1);
