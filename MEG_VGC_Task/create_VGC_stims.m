@@ -67,6 +67,9 @@ function create_VGC_stims
          indextaskrel= obsstr(ind(1:2));
          irrel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
+         indextaskrel= obsstr(ind(3:4));
+         neut_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
 
         temp=left_mazes_lat{i};
         tempint= cell(11,11);
@@ -84,6 +87,8 @@ function create_VGC_stims
          indextaskrel= obsstr(ind(1:2));
          irrel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
+         indextaskrel= obsstr(ind(3:4));
+         neut_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
         temp=orig_mazes_nonlat{i};
         tempint= cell(11,11);
@@ -101,6 +106,9 @@ function create_VGC_stims
          indextaskrel= obsstr(ind(1:2));
          irrel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
+         indextaskrel= obsstr(ind(3:4));
+         neut_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
         temp=flipped_mazes_nonlat{i};
         tempint= cell(11,11);
         tempint(temp == '.') = {[1,1,1]};
@@ -117,6 +125,9 @@ function create_VGC_stims
         indextaskrel= obsstr(ind(1:2));
         irrel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
+         indextaskrel= obsstr(ind(3:4));
+         neut_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
     end
 
     sVGC_right_mazes_lat= reshape([stats.sVGC(1:72); stats.sVGC(1:72)]', [6,24]);
@@ -129,6 +140,7 @@ function create_VGC_stims
         'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat', ...
         'dVGC_orig_mazes_nonlat',"dVGC_right_mazes_lat" , 'sVGC_orig_mazes_nonlat', 'sVGC_right_mazes_lat', ...
         "rel_flipped_mazes_lat", "rel_orig_mazes_lat","rel_left_mazes_lat", "rel_right_mazes_lat", ...
-        "irrel_flipped_mazes_lat", "irrel_orig_mazes_lat","irrel_left_mazes_lat", "irrel_right_mazes_lat" )
+        "irrel_flipped_mazes_lat", "irrel_orig_mazes_lat","irrel_left_mazes_lat", "irrel_right_mazes_lat",...
+        "neut_flipped_mazes_lat", "neut_orig_mazes_lat","neut_left_mazes_lat", "neut_right_mazes_lat")
 
 end

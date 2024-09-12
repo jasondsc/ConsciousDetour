@@ -76,10 +76,12 @@ fs = 480; % Sampling frequency (samples per second)
 dt = 1/fs; % seconds per sample 
 StopTime = 6; % seconds 
 t = (0:dt:StopTime)'; % seconds 
-f1 = 480/8; % Sine wave frequency (hertz) 
-f2 = 480/7; % Sine wave frequency (hertz) 
+f1 = 480/8; % Sine wave frequency (hertz) 60 Hz (inter mod, 8Hz, 52 hz, 76 Hz, 40, 24 Hz)
+f2 = 480/7; % Sine wave frequency (hertz)  68 Hz
+f3 = 480/5; % Sine wave frequency (hertz)  95 Hz
 tag1 = num2cell((cos(2*pi*f1*t)/2) +0.5);
 tag2 = num2cell((cos(2*pi*f2*t)/2) +0.5);
+tag3  = num2cell((cos(2*pi*f3*t)/2) +0.5);
                 
 
 %%
@@ -125,7 +127,7 @@ lateralized=repelem([0,1],1,48)';
 side= repelem([1,2,1,2],1,24)';
 temp=repmat([maze,lateralized, side], 2,1); % repeat trial matrix three time
 trialMatrix= table(temp(:,1), temp(:,2), temp(:,3));
-trialMatrix.Respond = repelem([1,1,0],64)'; % RESPONSE TRIALS ALL NON RESPONSE FOR PILOT !!!!!!
+trialMatrix.Respond = repelem([1,0,0],64)'; % RESPONSE TRIALS ALL NON RESPONSE FOR PILOT !!!!!!
 trialMatrix.Properties.VariableNames = ["mazeNo", "lateralized", "side", "respond"];
 
 trialMatrix = trialMatrix(randperm(size(trialMatrix,1)), :);
@@ -161,6 +163,13 @@ maze_irrelevance([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=irrel_rig
 maze_irrelevance([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=irrel_left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
 maze_irrelevance([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=irrel_flipped_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
 maze_irrelevance([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=irrel_orig_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
+
+% save task irrel
+maze_neutral= {};
+maze_neutral([trialMatrix.lateralized== 1 & trialMatrix.side ==1])=neut_right_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==1]));
+maze_neutral([trialMatrix.lateralized== 1 & trialMatrix.side ==2])=neut_left_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 1 & trialMatrix.side ==2]));
+maze_neutral([trialMatrix.lateralized== 0 & trialMatrix.side ==1])=neut_flipped_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==1]));
+maze_neutral([trialMatrix.lateralized== 0 & trialMatrix.side ==2])=neut_orig_mazes_lat(trialMatrix.mazeNo([trialMatrix.lateralized== 0 & trialMatrix.side ==2]));
 
 
 %SET UP DISPLAY
@@ -1239,6 +1248,7 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                 colour_stims= maze_array(1,this_practicetrial);
                 relevant_thistrial= maze_relevance(1,this_practicetrial);
                 irrelevant_thistrial= maze_irrelevance(1,this_practicetrial);
+                neutral_thistrial= maze_neutral(1,this_practicetrial);
 
                 index_relv= reshape((relevant_thistrial{1}==1)',1, []);
 
@@ -1254,9 +1264,13 @@ scale_pos4(2,:)=scale_pos(2,:)+centerYhalf+200;
                 colour_stims2([1,2],index_obs)=1;
                     
                 planningphase_rel =cellfun(@(x) repmat([x;x;1], [1,sum(index_relv)]), tag1, 'UniformOutput', false)';
+                
                 index_irrelv= reshape((irrelevant_thistrial{1}==1)',1, []);
-
                 planningphase_irrel =cellfun(@(x) repmat([x;x;1], [1,sum(index_irrelv)]), tag2, 'UniformOutput', false)';
+
+                index_neut= reshape((neutral_thistrial{1}==1)',1, []);
+                planningphase_neut =cellfun(@(x) repmat([x;x;1], [1,sum(index_neut)]), tag3, 'UniformOutput', false)';
+
 
                     % Screen priority
                     Priority(MaxPriority(mainWin));
@@ -1389,6 +1403,18 @@ Screen('FillRect',mainWin,[0 0 0],[0+xCenter;520+yCenter;20+xCenter;540+yCenter]
  
                         Screen('FillRect',mainWin, planningphase_irrel{f+3} ,stim_loc4(index_irrelv,:)');
                         Screen('FrameRect',mainWin,black ,stim_loc4(index_irrelv,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f} ,stim_loc1(index_irrelv,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc1(index_irrelv,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f+1} ,stim_loc2(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc2(index_neut,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f+2} ,stim_loc3(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc3(index_neut,:)', 0.5  );
+ 
+                        Screen('FillRect',mainWin, planningphase_neut{f+3} ,stim_loc4(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc4(index_neut,:)', 0.5  );
 
 Screen('FillRect',mainWin,[0 0 0],[940;520;960;540]); 
 Screen('FillRect',mainWin,[0 0 0],[940+xCenter;520;960+xCenter;540]); 
@@ -2012,6 +2038,7 @@ for this_trial=1:nTrials
                 fixCODE= 01;
                 relevant_thistrial= maze_irrelevance(1,this_trial);
                 irrelevant_thistrial= maze_relevance(1,this_trial);
+                neutral_thistrial= maze_neutral(1,this_trial);
                 index_relv= reshape((relevant_thistrial{1}==1)',1, []);
                 colour_stims_temp=colour_stims;
                 colour_stims{1}(relevant_thistrial{1}==1) = {[0.5 0 1]};
@@ -2040,11 +2067,16 @@ for this_trial=1:nTrials
                 propixxphoto=(cell2mat(tag2)==1) +  (cell2mat(tag2)==1);
                 photodiode2=cellfun(@(x) [x;x;x], tag2, 'UniformOutput', false)';
 
+                index_neut= reshape((neutral_thistrial{1}==1)',1, []);
+                planningphase_neut =cellfun(@(x) repmat([x;x;1], [1,sum(index_neut)]), tag3, 'UniformOutput', false)';
+
+
                 elseif mod(block,2)==0
 
                 fixCODE=02;
                 relevant_thistrial= maze_relevance(1,this_trial);
                 irrelevant_thistrial= maze_irrelevance(1,this_trial);
+                neutral_thistrial= maze_neutral(1,this_trial);
                 index_relv= reshape((relevant_thistrial{1}==1)',1, []);
                 colour_stims_temp=colour_stims;
                 colour_stims{1}(relevant_thistrial{1}==1) = {[0.5 0 1]};
@@ -2072,6 +2104,10 @@ for this_trial=1:nTrials
 
                 propixxphoto=(cell2mat(tag2)==1) +  (cell2mat(tag2)==1);
                 photodiode2=cellfun(@(x) [x;x;x], tag1, 'UniformOutput', false)';
+
+                index_neut= reshape((neutral_thistrial{1}==1)',1, []);
+                planningphase_neut =cellfun(@(x) repmat([x;x;1], [1,sum(index_neut)]), tag3, 'UniformOutput', false)';
+
 
                  end
                 
@@ -2223,6 +2259,18 @@ for this_trial=1:nTrials
  
                         Screen('FillRect',mainWin, planningphase_irrel{f+3} ,stim_loc4(index_irrelv,:)');
                         Screen('FrameRect',mainWin,black ,stim_loc4(index_irrelv,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f} ,stim_loc1(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc1(index_neut,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f+1} ,stim_loc2(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc2(index_neut,:)', 0.5  );
+
+                        Screen('FillRect',mainWin, planningphase_neut{f+2} ,stim_loc3(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc3(index_neut,:)', 0.5  );
+ 
+                        Screen('FillRect',mainWin, planningphase_neut{f+3} ,stim_loc4(index_neut,:)');
+                        Screen('FrameRect',mainWin,black ,stim_loc4(index_neut,:)', 0.5  );
 
                        % propixx pixel
                         Screen('FillRect',mainWin,[propixxphoto(f),propixxphoto(f),propixxphoto(f)]/255,[0;0;3;3]); 
