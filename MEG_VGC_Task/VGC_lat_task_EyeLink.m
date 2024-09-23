@@ -2,7 +2,7 @@ function task_representations
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % WRITE DESCRIPTION OF TASK
-% Participants will solve a series of mazes and reprot on their subsequent
+% Participants will solve a series of mazes and reprot on their su  bsequent
 % awareness of obstaclesn          
 % Participants can perform 10 practice trials
 %
@@ -13,7 +13,7 @@ function task_representations
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 Screen('Preference', 'SkipSyncTests', 1); 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
-
+ 
 %% set up of experimental parameters 
 CurrentFrameRateHz=FrameRate(0);
 
@@ -25,7 +25,7 @@ end
 
 %EXPERIMENT INFORMATION
      
-prompt={'SubjectID:','Gender','Age','Handiness (1=LEFT or 2=RIGHT): ','dummymode (1=Yes; 0=No)','Practice (1=Yes; 2=No)'};
+prompt={'SubjectID:','Gender','Age','Handedness (1=LEFT or 2=RIGHT): ','Dummymode (1=Yes; 0=No)','Practice (1=Yes; 2=No)'};
 title='EXPERIMENT INFORMATION'; 
 answer=inputdlg(prompt,title);
 subjectID = char(answer{1});
@@ -54,7 +54,7 @@ load('./StimMazes_RGB_4_Matlab.mat');
 maze= repmat([1:24],1,4)';
 lateralized=repelem([0,1],1,48)';
 side= repelem([1,2,1,2],1,24)';
-temp=repmat([maze,lateralized, side], 2,1); % repeat trial matrix two time
+temp=repmat([maze,lateralized, side], 1,1); % repeat trial matrix two time
 trialMatrix= table(temp(:,1), temp(:,2), temp(:,3));
 trialMatrix.Properties.VariableNames = ["mazeNo", "lateralized", "side"];
 
@@ -346,7 +346,7 @@ Eyelink('Command', 'button_function 5 "accept_target_fixation"');
 
 % Open File
 
-filename = subjectID;
+filename = [subjectID, '.edf'];
 Eyelink('OpenFile',filename)
 
 % check that the eye tracker is still connected.
@@ -533,8 +533,8 @@ Width=Screen(messageWindow,'TextBounds','Afterwards the maze will disappear');
 Screen('DrawText',messageWindow,'Afterwards the maze will disappear',centerX-(round(Width(3)/2)), centerY-180, white);
 Width=Screen(messageWindow,'TextBounds','When the red circle reappears you can begin to solve it!');
 Screen('DrawText',messageWindow,'When the red circle reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-120, white);
-Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT index finger');
-Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT index finger',centerX-(round(Width(3)/2)), centerY-60, white);
+Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT hand');
+Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT hand',centerX-(round(Width(3)/2)), centerY-60, white);
 Width=Screen(messageWindow,'TextBounds','Please navigate the mazes as quickly and as accurately as possible');
 Screen('DrawText',messageWindow,'Please navigate the mazes as quickly and as accurately as possible',centerX-(round(Width(3)/2)), centerY-0, white);
 
@@ -783,7 +783,7 @@ for iptrial=1:nPracticeTrials
                                 break;
                             end       
                             
-                        fixrect = SetRect(centerX-15,centerY-30,centerX+15,centerY);
+                        fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
                             
                         % check for endsaccade events
                         if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
@@ -1164,21 +1164,17 @@ for this_trial=1:nTrials
                     mazeRT=0;
                     
                      Eyelink('Message', 'TRIALID Trial %d', this_trial);
-                Eyelink('Command', 'record_status_message "TRIAL Trial %d"', this_trial);                      
-                    
-                % run the drift correction sequence
+                Eyelink('Command', 'record_status_message "TRIAL Trial %d"', this_trial);  
                 Eyelink('Command', 'set_idle_mode');
-                Eyelink('Command', 'clear_screen 0');
-                Eyelink('command', 'draw_filled_box %d %d %d %d 2', centerX-15,centerY-30,centerX+15,centerY); 
-                Eyelink('command', 'draw_filled_box %d %d %d %d 4' ,795,360,1125,690)
-                EyelinkDoDriftCorrection(el);
-            
-                % start recording the eye position
-                Eyelink('Command', 'set_idle_mode'); WaitSecs(0.05);
-            
+                    
+               
                 % start recording eye movements for the current trial  (waitsecs used to record a few samples before actually displaying the stimuli, less data loss)
                 Eyelink('StartRecording');
                 WaitSecs(0.1);
+                % run the drift correction sequence
+                Eyelink('Command', 'clear_screen 0');
+                Eyelink('Command', 'draw_filled_box %d %d %d %d 2', centerX-25,centerY-40,centerX+25,centerY+10); 
+                Eyelink('Command', 'draw_filled_box %d %d %d %d 4' ,795,360,1125,690)
                     
                     % Screen priority
                     Priority(MaxPriority(mainWin));
@@ -1200,7 +1196,8 @@ for this_trial=1:nTrials
                     Screen('FillRect',mainWin,color_fixation ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
-                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
+                    Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2);
+                    Screen('FillRect',mainWin,[1,0,0] ,[centerX-25,centerY-40,centerX+25,centerY+10]);
                     FixationWinTime=Screen('flip',mainWin,BlankWinTime + (FixOffSOA*IFI) - slack,0);
                     Eyelink('Message', 'Fixation');
                     
@@ -1218,7 +1215,7 @@ for this_trial=1:nTrials
                                 break;
                             end       
                             
-                        fixrect = SetRect(centerX-15,centerY-30,centerX+15,centerY);
+                        fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
                             
                         % check for endsaccade events
                         if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
@@ -1512,7 +1509,7 @@ for this_trial=1:nTrials
                     end
                     
                     % recording ROIs for the trial
-                    Eyelink('Message', '!V IAREA RECTANGLE 2 %d %d %d %d fixation', centerX-15,centerY-30,centerX+15,centerY); 
+                    Eyelink('Message', '!V IAREA RECTANGLE 2 %d %d %d %d fixation', centerX-25,centerY-40,centerX+25,centerY+10); 
                     Eyelink('Message', '!V IAREA RECTANGLE 2 %d %d %d %d fixation',795,360,1125,690)
                     
                     % recording trial data into an output edf file
@@ -1537,8 +1534,10 @@ for this_trial=1:nTrials
                     % BLOCK CHECK
                     %------------------------------------------------------------
     
-                    if (itrial < nTrials) && (mod(itrial,16)==0)
-    
+                    if (itrial < nTrials) && (mod(itrial,8)==0)
+                        
+
+                                            EyelinkDoDriftCorrection(el);
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
                                             Screen(messageWindow,'TextSize',22)
@@ -1615,7 +1614,7 @@ Eyelink('CloseFile');
 
 try
     fprintf('Receiving data file ''%s''\n', filename);
-    status = Eyelink('ReceiveFile');
+    status = Eyelink('ReceiveFile', filename);
     if status > 0
         fprintf('ReceiveFile status %d\n', status);
     end
