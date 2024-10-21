@@ -1,5 +1,5 @@
 function task_representations
-
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % WRITE DESCRIPTION OF TASK
 % Participants will solve a series of mazes and reprot on their su  bsequent
@@ -9,7 +9,6 @@ function task_representations
 % Org Author: Jason da Silva Castanheira 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
 Screen('Preference', 'SkipSyncTests', 1); 
 % !!!!!!!!!!!!!!!!!!!! TO REMOVE TO REMOVE TO REMOVE  !!!!!!!!!!!!!!!
@@ -424,216 +423,220 @@ while 1
     end
 end
 
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','In this task you will be asked to solve a series of mazes');
-Screen('DrawText',messageWindow,'In this task you will be asked to solve a series of mazes',centerX-(round(Width(3)/2)), centerY-300, white);
-Width=Screen(messageWindow,'TextBounds','Here is an example maze:');
-Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(3)/2)), centerY-260, white);
-
-colour_stims= reshape(stim_right_mazes_lat{1}', [1, 11*11]);
-colour_stims= vertcat(colour_stims{:})';
-
-position_self{1,1}= stim_right_mazes_lat{1}';
-[irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
-self_pos=  stim_loc(11*(icol-1) + irow, :);
-
-Screen('FillRect',messageWindow,colour_stims ,stim_loc');
-Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
-Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
-Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
-
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
-    end
-end
-
-
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','you will navigate yourself (a red circle) to the goal');
-Screen('DrawText',messageWindow,'you will navigate yourself (a red circle) to the goal',centerX-(round(Width(3)/2)), centerY-360, white);
-Width=Screen(messageWindow,'TextBounds','your character will start at the cyan square');
-Screen('DrawText',messageWindow,'your character will start at the cyan square',centerX-(round(Width(3)/2)), centerY-320, white);
-Width=Screen(messageWindow,'TextBounds','and you will need to make it to the green square');
-Screen('DrawText',messageWindow,'and you will need to make it to the green square',centerX-(round(Width(3)/2)), centerY-280, white);
-
-Screen('FillRect',messageWindow,colour_stims ,stim_loc');
-Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
-Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
-Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
-Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
-
-
-Width=Screen(messageWindow,'TextBounds','try to make it to the green square before it turns yellow');
-Screen('DrawText',messageWindow,'try to make it to the green square before it turns yellow',centerX-(round(Width(3)/2)), centerY+260, white);
-Width=Screen(messageWindow,'TextBounds','BEWARE of obstacles in blue');
-Screen('DrawText',messageWindow,'BEWARE of obstacles in blue',centerX-(round(Width(3)/2)), centerY+300, white);
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
-    end   
-end
-
-
-
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds',' we ask that you keep looking at the cross in the middle throughout the task');
-Screen('DrawText',messageWindow,'we ask that you keep looking at the cross in the middle throughout the task',centerX-(round(Width(3)/2)), centerY-360, white);
-Width=Screen(messageWindow,'TextBounds',' and to minimize eye movements when the maze is on the screen');
-Screen('DrawText',messageWindow,'and to minimize eye movements when the maze is on the screen',centerX-(round(Width(3)/2)), centerY-320, white);
-
-Screen('FillRect',messageWindow,colour_stims ,stim_loc');
-Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
-Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
-Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
-Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
-
-
-Width=Screen(messageWindow,'TextBounds','REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS' );
-Screen('DrawText',messageWindow,'REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS',centerX-(round(Width(3)/2)), centerY+260, white);
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
-    end   
-end
-
-
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','At the start of each trial, you will have');
-Screen('DrawText',messageWindow,'At the start of each trial, you will have',centerX-(round(Width(3)/2)), centerY-300, white);
-Width=Screen(messageWindow,'TextBounds','a few seconds to PLAN how you will solve the maze');
-Screen('DrawText',messageWindow,'a few seconds to PLAN how you will solve the maze',centerX-(round(Width(3)/2)), centerY-240, white);
-Width=Screen(messageWindow,'TextBounds','Afterwards the maze will disappear');
-Screen('DrawText',messageWindow,'Afterwards the maze will disappear',centerX-(round(Width(3)/2)), centerY-180, white);
-Width=Screen(messageWindow,'TextBounds','When the red circle reappears you can begin to solve it!');
-Screen('DrawText',messageWindow,'When the red circle reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-120, white);
-Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT hand');
-Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT hand',centerX-(round(Width(3)/2)), centerY-60, white);
-Width=Screen(messageWindow,'TextBounds','Please navigate the mazes as quickly and as accurately as possible');
-Screen('DrawText',messageWindow,'Please navigate the mazes as quickly and as accurately as possible',centerX-(round(Width(3)/2)), centerY-0, white);
-
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
-    end   
-end
-
-
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','We are interested in your thought process while navigating each maze');
-Screen('DrawText',messageWindow,'We are interested in your thought process while navigating each maze',centerX-(round(Width(3)/2)), centerY-300, white);
-Width=Screen(messageWindow,'TextBounds','Following each trial we will ask how AWARE of an obstacle you were at any point');
-Screen('DrawText',messageWindow,'Following each trial we will ask how AWARE of an obstacle you were at any point',centerX-(round(Width(3)/2)), centerY-240, white);
-Width=Screen(messageWindow,'TextBounds','Your answer should reflect the amount you paid ATTENTION this obstacle');
-Screen('DrawText',messageWindow,'Your answer should reflect the amount you paid ATTENTION this obstacle',centerX-(round(Width(3)/2)), centerY-180, white);
-Width=Screen(messageWindow,'TextBounds','during the PLANNING PHASE');
-Screen('DrawText',messageWindow,'during the PLANNING PHASE',centerX-(round(Width(3)/2)), centerY-120, white);
-Width=Screen(messageWindow,'TextBounds','YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK');
-Screen('DrawText',messageWindow,'YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK',centerX-(round(Width(3)/2)), centerY-60, white);
-
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
-    end
-end
-         
+ if practice == 1
     
-WaitSecs(1);
-messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','At the end of each trial, you will be asked');
-Screen('DrawText',messageWindow,'At the end of each trial, you will be asked',centerX-(round(Width(3)/2)), centerY-300, white);
-Screen(messageWindow,'TextSize'  , 30)
-Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle were you at any point?');
-Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-240, white);
-Screen(messageWindow,'TextSize'  , 22)
-Width=Screen(messageWindow,'TextBounds','You will respond on a 9 point scale like the one below:');
-Screen('DrawText',messageWindow,'You will respond on a 9 point scale like the one below:',centerX-(round(Width(3)/2)), centerY-160, white);
-
-% draw scale 
-                   scale_pos= [centerX-400, centerY+0; centerX+400, centerY+0; 
-                               centerX-400, centerY-40; centerX-400, centerY+40; 
-                            centerX-300, centerY-40; centerX-300, centerY+40;
-                            centerX-200, centerY-40; centerX-200, centerY+40;
-                            centerX-100, centerY-40; centerX-100, centerY+40;
-                           centerX-0, centerY-40; centerX-0, centerY+40;
-                           centerX+100, centerY-40; centerX+100, centerY+40;
-                           centerX+200, centerY-40; centerX+200, centerY+40;
-                           centerX+300, centerY-40; centerX+300, centerY+40;
-                           centerX+400, centerY-40; centerX+400, centerY+40]';
-
-Screen('DrawLines',messageWindow,scale_pos, 10, black);
-head   = [ centerX-0, centerY-40 ]; % coordinates of head
-width  = 20;           % width of arrow head
-points = [ head-[width,0]         % left corner
-               head+[width,0]         % right corner
-               head+[0,width] ];      % vertex
-Screen('FillPoly', messageWindow, white, points);
-
-Width=Screen(messageWindow,'TextBounds','use the arrow keys to move the cursor along the scale');
-Screen('DrawText',messageWindow,'use the arrow keys to move the cursor along the scale',centerX-(round(Width(3)/2)), centerY+220, white);
-Width=Screen(messageWindow,'TextBounds','press space when you are ready to submit your answer');
-Screen('DrawText',messageWindow,'press space when you are ready to submit your answer',centerX-(round(Width(3)/2)), centerY+260, white);
-
-Width=Screen(messageWindow,'TextBounds','not a lot');
-Screen('DrawText',messageWindow,'not a lot',centerX-490-(round(Width(3)/2)), centerY, white);
-Width=Screen(messageWindow,'TextBounds','a lot');
-Screen('DrawText',messageWindow,'a lot',centerX+500-(round(Width(3)/2)), centerY, white);
-
-
-Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
-Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
-Screen('DrawTexture',mainWin,messageWindow);
-Screen('Flip',mainWin)
-
-
-while 1
-    [keyIsDown,secs,keyCode] = KbCheck; 
-    if  keyCode(32)==1 || keyCode(44)==1
-        break
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','In this task you will be asked to solve a series of mazes');
+    Screen('DrawText',messageWindow,'In this task you will be asked to solve a series of mazes',centerX-(round(Width(3)/2)), centerY-300, white);
+    Width=Screen(messageWindow,'TextBounds','Here is an example maze:');
+    Screen('DrawText',messageWindow,'Here is an example maze:',centerX-(round(Width(3)/2)), centerY-260, white);
+    
+    colour_stims= reshape(stim_right_mazes_lat{1}', [1, 11*11]);
+    colour_stims= vertcat(colour_stims{:})';
+    
+    position_self{1,1}= stim_right_mazes_lat{1}';
+    [irow ,icol]=find(cellfun(@sum, (cellfun(@(x) x==[0 1 1], position_self{1,1}, 'UniformOutput', false))) ==3);
+    self_pos=  stim_loc(11*(icol-1) + irow, :);
+    
+    Screen('FillRect',messageWindow,colour_stims ,stim_loc');
+    Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+    Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+    Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
+    
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end
     end
-end
+    
+    
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','you will navigate yourself (a red circle) to the goal');
+    Screen('DrawText',messageWindow,'you will navigate yourself (a red circle) to the goal',centerX-(round(Width(3)/2)), centerY-360, white);
+    Width=Screen(messageWindow,'TextBounds','your character will start at the cyan square');
+    Screen('DrawText',messageWindow,'your character will start at the cyan square',centerX-(round(Width(3)/2)), centerY-320, white);
+    Width=Screen(messageWindow,'TextBounds','and you will need to make it to the green square');
+    Screen('DrawText',messageWindow,'and you will need to make it to the green square',centerX-(round(Width(3)/2)), centerY-280, white);
+    
+    Screen('FillRect',messageWindow,colour_stims ,stim_loc');
+    Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+    Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+    Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
+    Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
+    
+    
+    Width=Screen(messageWindow,'TextBounds','try to make it to the green square before it turns yellow');
+    Screen('DrawText',messageWindow,'try to make it to the green square before it turns yellow',centerX-(round(Width(3)/2)), centerY+260, white);
+    Width=Screen(messageWindow,'TextBounds','BEWARE of obstacles in blue');
+    Screen('DrawText',messageWindow,'BEWARE of obstacles in blue',centerX-(round(Width(3)/2)), centerY+300, white);
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end   
+    end
+    
+    
+    
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds',' we ask that you keep looking at the cross in the middle throughout the task');
+    Screen('DrawText',messageWindow,'we ask that you keep looking at the cross in the middle throughout the task',centerX-(round(Width(3)/2)), centerY-360, white);
+    Width=Screen(messageWindow,'TextBounds',' and to minimize eye movements when the maze is on the screen');
+    Screen('DrawText',messageWindow,'and to minimize eye movements when the maze is on the screen',centerX-(round(Width(3)/2)), centerY-320, white);
+    
+    Screen('FillRect',messageWindow,colour_stims ,stim_loc');
+    Screen('FrameRect',messageWindow,black ,stim_loc', 0.5  );
+    Screen('DrawLines',messageWindow,center_fix_loc, 7, white);
+    Screen('DrawDots', messageWindow, [centerX, centerY-15], 7, black, [], 2)
+    Screen('DrawDots', messageWindow, [self_pos(1) + 15, self_pos(2) + 15], 20, [1 0 0 ], [], 2)
+    
+    
+    Width=Screen(messageWindow,'TextBounds','REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS' );
+    Screen('DrawText',messageWindow,'REMEBER TO KEEP YOUR EYES FIXATED ON THE CENTRE CROSS',centerX-(round(Width(3)/2)), centerY+260, white);
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end   
+    end
+    
+    
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','At the start of each trial, you will have');
+    Screen('DrawText',messageWindow,'At the start of each trial, you will have',centerX-(round(Width(3)/2)), centerY-300, white);
+    Width=Screen(messageWindow,'TextBounds','a few seconds to PLAN how you will solve the maze');
+    Screen('DrawText',messageWindow,'a few seconds to PLAN how you will solve the maze',centerX-(round(Width(3)/2)), centerY-240, white);
+    Width=Screen(messageWindow,'TextBounds','Afterwards the maze will disappear');
+    Screen('DrawText',messageWindow,'Afterwards the maze will disappear',centerX-(round(Width(3)/2)), centerY-180, white);
+    Width=Screen(messageWindow,'TextBounds','When the red circle reappears you can begin to solve it!');
+    Screen('DrawText',messageWindow,'When the red circle reappears you can begin to solve it!',centerX-(round(Width(3)/2)), centerY-120, white);
+    Width=Screen(messageWindow,'TextBounds','Use the arrow keys to navigate through the maze with your RIGHT hand');
+    Screen('DrawText',messageWindow,'Use the arrow keys to navigate through the maze with your RIGHT hand',centerX-(round(Width(3)/2)), centerY-60, white);
+    Width=Screen(messageWindow,'TextBounds','Please navigate the mazes as quickly and as accurately as possible');
+    Screen('DrawText',messageWindow,'Please navigate the mazes as quickly and as accurately as possible',centerX-(round(Width(3)/2)), centerY-0, white);
+    
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)),centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end   
+    end
+    
+    
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','We are interested in your thought process while navigating each maze');
+    Screen('DrawText',messageWindow,'We are interested in your thought process while navigating each maze',centerX-(round(Width(3)/2)), centerY-300, white);
+    Width=Screen(messageWindow,'TextBounds','Following each trial we will ask how AWARE of an obstacle you were at any point');
+    Screen('DrawText',messageWindow,'Following each trial we will ask how AWARE of an obstacle you were at any point',centerX-(round(Width(3)/2)), centerY-240, white);
+    Width=Screen(messageWindow,'TextBounds','Your answer should reflect the amount you paid ATTENTION this obstacle');
+    Screen('DrawText',messageWindow,'Your answer should reflect the amount you paid ATTENTION this obstacle',centerX-(round(Width(3)/2)), centerY-180, white);
+    Width=Screen(messageWindow,'TextBounds','during the PLANNING PHASE');
+    Screen('DrawText',messageWindow,'during the PLANNING PHASE',centerX-(round(Width(3)/2)), centerY-120, white);
+    Width=Screen(messageWindow,'TextBounds','YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK');
+    Screen('DrawText',messageWindow,'YOUR ANSWER WILL NOT AFFECT YOUR PERFORMANCE ON THE TASK',centerX-(round(Width(3)/2)), centerY-60, white);
+    
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end
+    end
+             
+        
+    WaitSecs(1);
+    messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','At the end of each trial, you will be asked');
+    Screen('DrawText',messageWindow,'At the end of each trial, you will be asked',centerX-(round(Width(3)/2)), centerY-300, white);
+    Screen(messageWindow,'TextSize'  , 30)
+    Width=Screen(messageWindow,'TextBounds','How aware of the highlighted obstacle were you at any point?');
+    Screen('DrawText',messageWindow,'How aware of the highlighted obstacle were you at any point?',centerX-(round(Width(3)/2)), centerY-240, white);
+    Screen(messageWindow,'TextSize'  , 22)
+    Width=Screen(messageWindow,'TextBounds','You will respond on a 9 point scale like the one below:');
+    Screen('DrawText',messageWindow,'You will respond on a 9 point scale like the one below:',centerX-(round(Width(3)/2)), centerY-160, white);
+    
+    % draw scale 
+                       scale_pos= [centerX-400, centerY+0; centerX+400, centerY+0; 
+                                   centerX-400, centerY-40; centerX-400, centerY+40; 
+                                centerX-300, centerY-40; centerX-300, centerY+40;
+                                centerX-200, centerY-40; centerX-200, centerY+40;
+                                centerX-100, centerY-40; centerX-100, centerY+40;
+                               centerX-0, centerY-40; centerX-0, centerY+40;
+                               centerX+100, centerY-40; centerX+100, centerY+40;
+                               centerX+200, centerY-40; centerX+200, centerY+40;
+                               centerX+300, centerY-40; centerX+300, centerY+40;
+                               centerX+400, centerY-40; centerX+400, centerY+40]';
+    
+    Screen('DrawLines',messageWindow,scale_pos, 10, black);
+    head   = [ centerX-0, centerY-40 ]; % coordinates of head
+    width  = 20;           % width of arrow head
+    points = [ head-[width,0]         % left corner
+                   head+[width,0]         % right corner
+                   head+[0,width] ];      % vertex
+    Screen('FillPoly', messageWindow, white, points);
+    
+    Width=Screen(messageWindow,'TextBounds','use the arrow keys to move the cursor along the scale');
+    Screen('DrawText',messageWindow,'use the arrow keys to move the cursor along the scale',centerX-(round(Width(3)/2)), centerY+220, white);
+    Width=Screen(messageWindow,'TextBounds','press space when you are ready to submit your answer');
+    Screen('DrawText',messageWindow,'press space when you are ready to submit your answer',centerX-(round(Width(3)/2)), centerY+260, white);
+    
+    Width=Screen(messageWindow,'TextBounds','not a lot');
+    Screen('DrawText',messageWindow,'not a lot',centerX-490-(round(Width(3)/2)), centerY, white);
+    Width=Screen(messageWindow,'TextBounds','a lot');
+    Screen('DrawText',messageWindow,'a lot',centerX+500-(round(Width(3)/2)), centerY, white);
+    
+    
+    Width=Screen(messageWindow,'TextBounds','Press Spacebar to Continue');
+    Screen('DrawText',messageWindow,'Press Spacebar to Continue',centerX-(round(Width(3)/2)), centerY+350, white);
+    Screen('DrawTexture',mainWin,messageWindow);
+    Screen('Flip',mainWin)
+    
+    
+    while 1
+        [keyIsDown,secs,keyCode] = KbCheck; 
+        if  keyCode(32)==1 || keyCode(44)==1
+            break
+        end
+    end
+
+ end
                   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PRACTICE TRIALS
@@ -769,67 +772,67 @@ for iptrial=1:nPracticeTrials
                     FixationWinTime=Screen('flip',mainWin,BlankWinTime + (FixOffSOA*IFI) - slack,0);
 
                     
-                    SetMouse(300,300);
-                    % Making Sure that the participants look at fixation
-                    while 1 
-                            [keyIsDown,secs,keyCode] = KbCheck; 
-                                if  keyCode(81)==1 
-                                    sca;
-                                    break
-                                end
-                                
-                            error=Eyelink('checkrecording');        % Check recording status, stop display if error
-                            if(error~=0)
-                                break;
-                            end       
-                            
-                        fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
-                            
-                        % check for endsaccade events
-                        if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
-                            ShowCursor;
-                            [x,y,button] = GetMouse(window);
-                            evt.gavx=x;
-                            evt.gavy=y;
-                            evtype=el.STARTFIX;
-                                    if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
-                                        FixationTime = GetSecs;
-                                        FixationWinToFix = FixationTime - FixationWinTime;
-                                        HideCursor;
-                                        break;
-                                    end
-                        else % check for events
-                            evtype=Eyelink('getnextdatatype');
-                        end
-                        
-                        if evtype==8
-                            if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
-                                evt = Eyelink('getfloatdata', evtype);
-                                    if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
-                                        FixationTime = GetSecs;
-                                        FixationWinToFix = FixationTime - FixationWinTime;
-                                        break;
-                                    end
-                            end
-                            
-                    elseif evtype == 6
-                            if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
-                                evt = Eyelink('getfloatdata', evtype);
-                                    if  1==IsInRect(evt.genx,evt.geny,fixrect)
-                                    FixationTime = GetSecs;
-                                    FixationWinToFix = FixationTime - FixationWinTime;
-                                    break;
-                                    end
-                            end                            
-                        end
-                    end              
+                    % SetMouse(300,300);
+                    % % Making Sure that the participants look at fixation
+                    % while 1 
+                    %         [keyIsDown,secs,keyCode] = KbCheck; 
+                    %             if  keyCode(81)==1 
+                    %                 sca;
+                    %                 break
+                    %             end
+                    % 
+                    %         error=Eyelink('checkrecording');        % Check recording status, stop display if error
+                    %         if(error~=0)
+                    %             break;
+                    %         end       
+                    % 
+                    %     fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
+                    % 
+                    %     % check for endsaccade events
+                    %     if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
+                    %         ShowCursor;
+                    %         [x,y,button] = GetMouse(window);
+                    %         evt.gavx=x;
+                    %         evt.gavy=y;
+                    %         evtype=el.STARTFIX;
+                    %                 if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
+                    %                     FixationTime = GetSecs;
+                    %                     FixationWinToFix = FixationTime - FixationWinTime;
+                    %                     HideCursor;
+                    %                     break;
+                    %                 end
+                    %     else % check for events
+                    %         evtype=Eyelink('getnextdatatype');
+                    %     end
+                    % 
+                    %     if evtype==8
+                    %         if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
+                    %             evt = Eyelink('getfloatdata', evtype);
+                    %                 if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
+                    %                     FixationTime = GetSecs;
+                    %                     FixationWinToFix = FixationTime - FixationWinTime;
+                    %                     break;
+                    %                 end
+                    %         end
+                    % 
+                    % elseif evtype == 6
+                    %         if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
+                    %             evt = Eyelink('getfloatdata', evtype);
+                    %                 if  1==IsInRect(evt.genx,evt.geny,fixrect)
+                    %                 FixationTime = GetSecs;
+                    %                 FixationWinToFix = FixationTime - FixationWinTime;
+                    %                 break;
+                    %                 end
+                    %         end                            
+                    %     end
+                    % end              
                     
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (60*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (90*IFI) - slack,0);
 
 
                     %show Delay period
@@ -1197,72 +1200,72 @@ for this_trial=1:nTrials
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2);
-                    Screen('FillRect',mainWin,[1,0,0] ,[centerX-25,centerY-40,centerX+25,centerY+10]);
+                    % Screen('FillRect',mainWin,[1,0,0] ,[centerX-25,centerY-40,centerX+25,centerY+10]);
                     FixationWinTime=Screen('flip',mainWin,BlankWinTime + (FixOffSOA*IFI) - slack,0);
                     Eyelink('Message', 'Fixation');
                     
-                    SetMouse(300,300);
+                    %SetMouse(300,300);
                     % Making Sure that the participants look at fixation
-                    while 1 
-                            [keyIsDown,secs,keyCode] = KbCheck; 
-                                if  keyCode(81)==1 
-                                    sca;
-                                    break
-                                end
-                                
-                            error=Eyelink('checkrecording');        % Check recording status, stop display if error
-                            if(error~=0)
-                                break;
-                            end       
-                            
-                        fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
-                            
-                        % check for endsaccade events
-                        if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
-                            ShowCursor;
-                            [x,y,button] = GetMouse(window);
-                            evt.gavx=x;
-                            evt.gavy=y;
-                            evtype=el.STARTFIX;
-                                    if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
-                                        FixationTime = GetSecs;
-                                        FixationWinToFix = FixationTime - FixationWinTime;
-                                        HideCursor;
-                                        break;
-                                    end
-                        else % check for events
-                            evtype=Eyelink('getnextdatatype');
-                        end
-                        
-                        if evtype==8
-                            if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
-                                evt = Eyelink('getfloatdata', evtype);
-                                    if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
-                                        FixationTime = GetSecs;
-                                        FixationWinToFix = FixationTime - FixationWinTime;
-                                        break;
-                                    end
-                            end
-                            
-                    elseif evtype == 6
-                            if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
-                                evt = Eyelink('getfloatdata', evtype);
-                                    if  1==IsInRect(evt.genx,evt.geny,fixrect)
-                                    FixationTime = GetSecs;
-                                    FixationWinToFix = FixationTime - FixationWinTime;
-                                    break;
-                                    end
-                            end                            
-                        end
-                    end              
-           
+                    % while 1 
+                    %         [keyIsDown,secs,keyCode] = KbCheck; 
+                    %             if  keyCode(81)==1 
+                    %                 sca;
+                    %                 break
+                    %             end
+                    % 
+                    %         error=Eyelink('checkrecording');        % Check recording status, stop display if error
+                    %         if(error~=0)
+                    %             break;
+                    %         end       
+                    % 
+                    %     fixrect = SetRect(centerX-25,centerY-40,centerX+25,centerY+10);
+                    % 
+                    %     % check for endsaccade events
+                    %     if Eyelink('isconnected') == el.dummyconnected % in dummy mode use mousecoordinates
+                    %         ShowCursor;
+                    %         [x,y,button] = GetMouse(window);
+                    %         evt.gavx=x;
+                    %         evt.gavy=y;
+                    %         evtype=el.STARTFIX;
+                    %                 if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
+                    %                     FixationTime = GetSecs;
+                    %                     FixationWinToFix = FixationTime - FixationWinTime;
+                    %                     HideCursor;
+                    %                     break;
+                    %                 end
+                    %     else % check for events
+                    %         evtype=Eyelink('getnextdatatype');
+                    %     end
+                    % 
+                    %     if evtype==8
+                    %         if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
+                    %             evt = Eyelink('getfloatdata', evtype);
+                    %                 if  1==IsInRect(evt.gavx,evt.gavy,fixrect)
+                    %                     FixationTime = GetSecs;
+                    %                     FixationWinToFix = FixationTime - FixationWinTime;
+                    %                     break;
+                    %                 end
+                    %         end
+                    % 
+                    % elseif evtype == 6
+                    %         if Eyelink('isconnected') == el.connected % if we're really measuring eye-movements
+                    %             evt = Eyelink('getfloatdata', evtype);
+                    %                 if  1==IsInRect(evt.genx,evt.geny,fixrect)
+                    %                 FixationTime = GetSecs;
+                    %                 FixationWinToFix = FixationTime - FixationWinTime;
+                    %                 break;
+                    %                 end
+                    %         end                            
+                    %     end
+                    % end              
+                    % 
                     
                     %show Stimuluas
                     Screen('FillRect',mainWin, colour_stims ,stim_loc');
                     Screen('FrameRect',mainWin,black ,stim_loc', 0.5  );
                     Screen('DrawLines',mainWin,center_fix_loc, 7, white);
                     Screen('DrawDots', mainWin, [centerX, centerY-15], 7, black, [], 2)
-                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (60*IFI) - slack,0);
+                    StimulusWinTime= Screen('flip',mainWin,FixationWinTime + (90*IFI) - slack,0);
                     Eyelink('Message', 'Maze');
 
                     %show Delay period
@@ -1536,8 +1539,6 @@ for this_trial=1:nTrials
     
                     if (itrial < nTrials) && (mod(itrial,8)==0)
                         
-
-                                            EyelinkDoDriftCorrection(el);
                                             WaitSecs(1);
                                             messageWindow = Screen(mainWin,'OpenOffscreenWindow',grey);
                                             Screen(messageWindow,'TextSize',22)
@@ -1577,6 +1578,7 @@ for this_trial=1:nTrials
                                             end
                                             WaitSecs(1);
                                             block=block+1;
+                                            EyelinkDoDriftCorrection(el);
                      
                     end
                     
