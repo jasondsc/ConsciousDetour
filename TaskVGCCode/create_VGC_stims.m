@@ -1,5 +1,4 @@
 
-
 function create_VGC_stims
 
     %% read in mazes from json file and seperate them into workable cell arrays
@@ -37,11 +36,16 @@ function create_VGC_stims
     mazes_ud= cellfun(@flipud, mazes_nonlateralized, 'UniformOutput', false);
     flipped_mazes_ud= cellfun(@flipud, flipped, 'UniformOutput', false);
 
+   stats=readtable('./mazes/Lateralized_mazes_stats.csv');
 
     % when we see side ==2 this means original, side ==1 inverted LR
     orig_mazes_nonlat= [mazes_nonlateralized;mazes_ud]; 
     flipped_mazes_nonlat= [flipped; flipped_mazes_ud];
 
+    obsstr= ['0', '1', '2', '3', '4', '5'];
+
+    statslat=  [stats(1:72,:); stats(1:72,:)];
+    statsnonlat=  [stats(73:144,:); stats(73:144,:)];
 
     %% convert mazes to RGB
 
@@ -53,9 +57,18 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
-
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_right_mazes_lat{i,1} = tempint;
+
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+        indextaskrel= obsstr(ind(5:6));
+         rel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(1:2));
+         irrel_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(3:4));
+         neut_right_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
 
         temp=left_mazes_lat{i};
@@ -64,9 +77,18 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
-
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_left_mazes_lat{i,1} = tempint;
+
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+          indextaskrel= obsstr(ind(5:6));
+         rel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(1:2));
+         irrel_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(3:4));
+         neut_left_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
         temp=orig_mazes_nonlat{i};
         tempint= cell(11,11);
@@ -74,9 +96,18 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
-
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_orig_mazes_nonlat{i,1} = tempint;
+
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+         indextaskrel= obsstr(ind(5:6));
+         rel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(1:2));
+         irrel_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(3:4));
+         neut_orig_mazes_lat{i,1}=ismember(temp, indextaskrel);
 
         temp=flipped_mazes_nonlat{i};
         tempint= cell(11,11);
@@ -84,14 +115,20 @@ function create_VGC_stims
         tempint(temp == '#') = {[0,0,0]};
         tempint(temp == 'G') = {[0,1,0]};
         tempint(temp == 'S') = {[0,1,1]};
-        tempint(cellfun(@isempty, tempint)) = {[0,0,1]};
-
+        tempint(cellfun(@isempty, tempint)) = {[0.5,0.5,1]};
         stim_flipped_mazes_nonlat{i,1} = tempint;
 
+        [m,ind]=sort(statslat.dVGC( ((6*(i-1))+1):((6*(i-1))+6)));
+        indextaskrel= obsstr(ind(5:6));
+         rel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+        indextaskrel= obsstr(ind(1:2));
+        irrel_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
+         indextaskrel= obsstr(ind(3:4));
+         neut_flipped_mazes_lat{i,1}=ismember(temp, indextaskrel);
+
     end
-
-
-    stats=readtable('./mazes/Lateralized_mazes_stats.csv');
 
     sVGC_right_mazes_lat= reshape([stats.sVGC(1:72); stats.sVGC(1:72)]', [6,24]);
     sVGC_orig_mazes_nonlat= reshape([stats.sVGC(73:end); stats.sVGC(73:end)]', [6,24]);
@@ -101,6 +138,9 @@ function create_VGC_stims
     save('./StimMazes_RGB_4_Matlab.mat', ...
         'stim_flipped_mazes_nonlat',  'stim_left_mazes_lat', 'stim_orig_mazes_nonlat', 'stim_right_mazes_lat',...
         'flipped_mazes_nonlat',  'left_mazes_lat', 'orig_mazes_nonlat', 'right_mazes_lat', ...
-        'dVGC_orig_mazes_nonlat',"dVGC_right_mazes_lat" , 'sVGC_orig_mazes_nonlat', 'sVGC_right_mazes_lat')
+        'dVGC_orig_mazes_nonlat',"dVGC_right_mazes_lat" , 'sVGC_orig_mazes_nonlat', 'sVGC_right_mazes_lat', ...
+        "rel_flipped_mazes_lat", "rel_orig_mazes_lat","rel_left_mazes_lat", "rel_right_mazes_lat", ...
+        "irrel_flipped_mazes_lat", "irrel_orig_mazes_lat","irrel_left_mazes_lat", "irrel_right_mazes_lat",...
+        "neut_flipped_mazes_lat", "neut_orig_mazes_lat","neut_left_mazes_lat", "neut_right_mazes_lat")
 
 end
