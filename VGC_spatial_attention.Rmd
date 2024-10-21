@@ -1,0 +1,1995 @@
+---
+title: "ValueGuidedConstrual"
+output: html_document
+date: "2024-05-03"
+---
+
+``` {r helpful functions and libraries}
+
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+# function to compute manhattan distance between all pairs of obstacles 
+obstacle_distances <- function(mazeA){
+  number_obs= length(unique(as.numeric(mazeA)))-1
+  max_obs= max(as.numeric(mazeA), na.rm = TRUE)
+  min_obs= min(as.numeric(mazeA), na.rm = TRUE)
+  mazeA[mazeA=='G']=NaN
+  mazeA[mazeA=='S']=NaN
+  mazeA[mazeA=='.']=NaN
+  mazeA[mazeA=='#']=NaN
+
+  obstacle_distances_output= matrix(, nrow=number_obs*number_obs, 3)
+  obstacle_distances_output[,1] = rep(seq(min_obs,max_obs), each=7)
+  obstacle_distances_output[,2] = rep(seq(min_obs,max_obs), 7)
+  
+  output=c()
+  for (i in min_obs:max_obs){
+    for (j in min_obs:max_obs){
+      obs1=which(mazeA== as.character(i))
+      obs1x= obs1 %% 11
+      obs1x[obs1x==0] =11
+      obs1y= ceiling(obs1/11)
+      obs2= which(mazeA== as.character(j))
+      obs2x= obs2 %% 11
+      obs2x[obs2x==0] =11
+      obs2y= ceiling(obs2/11)
+      
+      distance =c()
+      for (obsA in 1:length(obs1x)){
+        for (obsB in 1:length(obs2x)){
+          distance= c(distance, abs(obs1x[obsA]-obs2x[obsB]) + abs(obs1y[obsA]-obs2y[obsB]))
+        }
+      }
+    
+      output= c(output,min(distance))
+    }
+  }
+  obstacle_distances_output[,3]=output
+  return(obstacle_distances_output)
+}
+
+# load in libraries
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+```
+
+
+```{r Effects of distance (spatial context) on awareness}
+
+# read in data and organize
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+maze_stats_new[,16:22] =NaN
+
+# rank order obstacles in maze
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+
+    count=1
+    rank_temp= matrix(, nrow = 7, ncol = 7)
+    distance= matrix(, nrow = 7, ncol = 7)
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      # order by distance
+      rank_temp[count,] = order(obs_temp[,3])-1
+      distance[count,]= obs_temp[order(obs_temp[,3]),3]
+      count= count+1
+    }
+    
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,16:22]=rank_temp
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,23:29]=distance
+}
+
+
+# now replace rank order with awareness 
+maze_stats_new= maze_stats_new[!is.nan(maze_stats_new$chunking1sVGC),]
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,17], sep=''))
+
+data$obs1=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+mean(maze_stats_new[,24], na.rm=TRUE)
+mean(maze_stats_new[,25], na.rm=TRUE)
+mean(maze_stats_new[,26], na.rm=TRUE)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,18], sep=''))
+data$obs2=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,19], sep=''))
+data$obs3=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,20], sep=''))
+data$obs4=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,21], sep=''))
+data$obs5=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,22], sep=''))
+data$obs6=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs1)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs1=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs2)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs2=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs3)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs3=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs4)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs4=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs5)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs5=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs6)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs6=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+# z-score the columns (aka awarness for 1-6th rank)
+data$Atten_obs1Z= scale(as.numeric(data$Atten_obs1))[,1]
+data$Atten_obs2Z= scale(as.numeric(data$Atten_obs2))[,1]
+data$Atten_obs3Z= scale(as.numeric(data$Atten_obs3))[,1]
+data$Atten_obs4Z= scale(as.numeric(data$Atten_obs4))[,1]
+data$Atten_obs5Z= scale(as.numeric(data$Atten_obs5))[,1]
+data$Atten_obs6Z= scale(as.numeric(data$Atten_obs6))[,1]
+data$attention_N_Z= scale(as.numeric(data$attention_N))[,1]
+
+# run linear regression, predict awareness of obstacle from neighbours
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm1= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= data)
+
+anova(lm0,lm1, lm1.1)
+sjPlot::tab_model(lm1)
+
+# it seems like the closest items are most weighted and furthest items are down weighting 
+
+# Test if effect still holds after removing the model prediction effect
+data$resids=scale(residuals(lm1.1))
+lm1.2= lm(resids ~   Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= data)
+sjPlot::tab_model(lm1.2)
+
+# plot effects
+data4plot = summary(lm1)$coefficients
+data4plot= data4plot[-1,]
+colnames(data4plot)[2]= "Std.Error" 
+
+library(ggplot2)
+
+ggplot(data4plot, aes(x=1:6, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4, color= '#F36A17') + geom_path(color= '#F36A17',size=1.25) + ggpubr::theme_classic2()  + geom_errorbar(fill= '#F36A17', color= '#F36A17', width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights.pdf', device = "pdf", width= 6, height =5)
+
+
+# check if this effect holds if we do it for task relevant and irrelevant seperately
+data$importnat = data$static_vgc_weight > 0.5
+datacrit= data[data$importnat,]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= datacrit)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= datacrit)
+lm1= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datacrit)
+anova(lm0,lm1, lm1.1)
+sjPlot::tab_model(lm1)
+
+datacrit= data[!data$importnat,]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= datacrit)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= datacrit)
+lm2= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datacrit)
+anova(lm0,lm2, lm1.1)
+sjPlot::tab_model(lm2)
+
+
+data4plot = summary(lm1)$coefficients
+data4plot= data4plot[-1,]
+
+data4plot2 = summary(lm2)$coefficients
+data4plot2= data4plot2[-1,]
+data4plot=rbind(data4plot, data4plot2)
+colnames(data4plot)[2]= "Std.Error" 
+data4plot= as.data.frame(data4plot)
+data4plot$mazetype= rep(c('relevant', 'irrelevant'), each= 6)
+data4plot$distance= 1:6
+
+ggplot(data4plot, aes(x=distance, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error, colour = mazetype, fill= mazetype)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4) + geom_path(size=1.25) + ggpubr::theme_classic2()  + geom_errorbar( width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values=c('#D3D3D3', '#F36A17')) + scale_color_manual(values=c('#D3D3D3', '#F36A17')) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_by_relv_irrelv.pdf', device = "pdf", width= 6, height =5)
+
+
+```
+
+
+```{r Effects of distance on awareness fit model per person}
+
+# run previous section and then run this one!
+
+coeff_subj= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+coeff_lower= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+coeff_upper= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+count=1
+subjkeep=c()
+for (subji in unique(data$sessionId)) {
+  
+  datatemp= data[data$sessionId == subji,]
+  
+  if(sd(datatemp$attention_N) !=0){
+
+    # select out participant data and z-score within person! 
+    subjkeep= c(subjkeep, subji)
+    datatemp$Atten_obs1Z= scale(as.numeric(datatemp$Atten_obs1))[,1]
+    datatemp$Atten_obs2Z= scale(as.numeric(datatemp$Atten_obs2))[,1]
+    datatemp$Atten_obs3Z= scale(as.numeric(datatemp$Atten_obs3))[,1]
+    datatemp$Atten_obs4Z= scale(as.numeric(datatemp$Atten_obs4))[,1]
+    datatemp$Atten_obs5Z= scale(as.numeric(datatemp$Atten_obs5))[,1]
+    datatemp$Atten_obs6Z= scale(as.numeric(datatemp$Atten_obs6))[,1]
+    datatemp$attention_N_Z= scale(as.numeric(datatemp$attention_N))[,1]
+
+  # fit linear model per peron and save corresponding outputs in matrix 
+  lm1= lm(attention_N_Z ~ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datatemp)
+  
+  coeff_subj[count,]= summary(lm1)$coefficients[,1]
+  coeff_lower[count,]= confint(lm1)[,1]
+  coeff_upper[count,]= confint(lm1)[,2]
+  count= count+1
+  }
+
+}
+
+coeff_subj= coeff_subj[!is.na(coeff_subj[,1]),]
+coeff_lower= coeff_lower[!is.na(coeff_lower[,1]),]
+coeff_upper= coeff_upper[!is.na(coeff_upper[,1]),]
+
+apply(coeff_subj, 2, mean)
+apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+apply(coeff_subj, 2, mean)+ apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+apply(coeff_subj, 2, mean)- apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+# see which beta coeffs are different than zero with t test 
+ttests=apply(coeff_subj[,2:7], 2, t.test)
+
+# adjust for multiple tests with fdr 
+p.adjust(c(ttests[[1]]$p.value, ttests[[2]]$p.value, ttests[[3]]$p.value,ttests[[4]]$p.value, ttests[[5]]$p.value, ttests[[6]]$p.value ), method = 'fdr')
+
+data4plot= stack(as.data.frame(coeff_subj[,-1]))
+data4plot$ind = plyr::mapvalues(data4plot$ind, c('V1','V2', 'V3', 'V4', 'V5', 'V6'), 1:6)
+distances2plot= stack(maze_stats_new[,24:29])
+distances2plot$ind = plyr::mapvalues(distances2plot$ind, c('V24','V25', 'V26', 'V27', 'V28', 'V29'), 1:6)
+
+data4plot$subID = rep(subjkeep, 6)
+
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17' )) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + ggdist::stat_halfeye(adjust = 0.5, justification = -0.6, width = 0.5, alpha = 0.75) + geom_boxplot( outliers = FALSE, width=0.45)  + ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) + theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_individual_level.pdf', device = "pdf", width= 7, height =5)
+
+# outlier subject with very large beta effects (more tnan twice the largest effect)
+data4plot=data4plot[data4plot$subID != 'OB13KJOGeb',]
+jitter_pos=position_jitter(width = .1, height = 0, seed = 1)
+
+# plot a random subset of people to see what it looks like
+ggplot(data=data4plot[data4plot$subID %in% unique(data4plot$subID)[70:80],], aes(y= values, x =ind, fill =subID, colour = subID, group= subID)) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + geom_path(size=0.7,alpha=0.9, linetype= 'solid', position = jitter_pos)  + geom_point(size=3,alpha=0.9,position = jitter_pos)+ ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+# plot all participants betas (spatial effects)
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17', colour = '#F36A17', group= subID)) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + geom_path(size=0.7,alpha=0.1, linetype= 'solid', color= '#CA6F07', fill= '#CA6F07',position = jitter_pos)  + geom_point(size=3,alpha=0.2,colour = '#F36A17',position = jitter_pos)+ ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) +  scale_colour_manual(values ='#F36A17' )+  theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_individual_level_line_plot.pdf', device = "pdf", width= 7, height =5)
+
+distances2plot= distances2plot[!is.na(distances2plot$values),]
+distances2plot %>% group_by(ind) %>% summarize(mean= mean(values), median=median(values), sd= sd(values))
+
+ggplot() + geom_boxplot(data=distances2plot, aes(y= values, x =ind, fill ='#609D68' ), outliers = FALSE, width=0.5)  + ggpubr::theme_classic2()+ ylab('distance between obstacles') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#609D68' ) + theme(legend.position = 'none')
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances.pdf', device = "pdf", width= 5, height =5)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+# How do differences in attention effect relate to task performance?
+# relate magnitude of beta effect with sparsity of representation
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+slopes=c()
+fits= c()
+count=1
+for (subji in sort(unique(data4plot$subID))) {
+  
+  print(subji)
+  datatemp= data4plot[data4plot$subID == subji,]
+  datatemp$ind = as.integer(datatemp$ind)
+  
+  lm1= lm(values ~ ind, data= datatemp)
+  slopes[count] = summary(lm1)$coefficients[2,1]
+  fits[count]= summary(lm1)$r.squared
+  count=count+1
+
+}
+
+
+
+ggplot(data=data.frame(slopes), aes(x=1, y=slopes, color='#D97D08', fill= '#D97D08'))+
+  ggdist::stat_halfeye(adjust = .5, width = .1, justification = -.75, alpha=0.5, point_alpha= 0) + geom_boxplot(width = .1, outlier.shape = NA, colour= '#888888') + scale_fill_manual(values=c('#D97D08')) + scale_color_manual(values=c('#D97D08')) + ylab("neighbour slope") + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + ggpubr::theme_classic2() + coord_flip()
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_hist_of_subjects.pdf', device = "pdf", width= 5, height =1)
+
+# rank subjects from top to bottom (best to worst attention effect)
+# plot their representations on the maze as examples
+# to plot mazes please see python scripts 
+
+# top subjects 
+tops=unique(data4plot$subID)[order(slopes)[1:16]]
+
+tops_a=data[data$sessionId %in% tops,] %>% group_by(grid, obstacle) %>% summarise(mean_awa= mean(attention_N))
+
+# worst subjects 
+bottoms=unique(data4plot$subID)[order(slopes)[141:156]]
+bottoms_a=data[data$sessionId %in% bottoms,] %>% group_by(grid, obstacle) %>% summarise(mean_awa= mean(attention_N))
+
+tops_a$bottoms=bottoms_a$mean_awa
+
+write.csv(tops_a, '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/top_bottoms_slopes_effects.csv')
+
+
+# compute the sparsity of the representation as the mean variance of their awareness
+# on each maze
+sd_aware=data[data$sessionId %in% unique(data4plot$subID),] %>% group_by(sessionId, grid, round) %>% summarise(sd_awa= var(attention_N))
+
+sd_aware= sd_aware %>% group_by(sessionId) %>% summarise(mean_sd= mean(sd_awa))
+sd_aware= sd_aware[order(sd_aware$sessionId),]
+
+# test the linear relationship using spearman rank corr
+cor.test(slopes, sd_aware$mean_sd, method = 'spearman')
+cor.test(log10(slopes + 0.1 +abs(min(slopes))), sd_aware$mean_sd)
+
+data4plotting= data.frame(slopes= slopes, sd_aware= sd_aware$mean_sd)
+
+ggplot(data4plotting, aes(x=slopes, y= sd_aware, color='1', fill= '1')) +  geom_point() + theme_classic() + xlab("slope of neighbour effect") +  ylab("construal size (sd)") + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= TRUE, fullrange = T) + scale_fill_manual(values=c('#D97D08')) + scale_color_manual(values=c('#D97D08'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/constural_size_slope_effect.pdf', device = "pdf", width= 7, height =5)
+
+
+```
+
+
+```{r Permutation test for spatial context effects }
+
+
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+# function to compute manhattan distance between all pairs of obstacles 
+obstacle_distances <- function(mazeA){
+  number_obs= length(unique(as.numeric(mazeA)))-1
+  max_obs= max(as.numeric(mazeA), na.rm = TRUE)
+  min_obs= min(as.numeric(mazeA), na.rm = TRUE)
+  mazeA[mazeA=='G']=NaN
+  mazeA[mazeA=='S']=NaN
+  mazeA[mazeA=='.']=NaN
+  mazeA[mazeA=='#']=NaN
+
+  obstacle_distances_output= matrix(, nrow=number_obs*number_obs, 3)
+  obstacle_distances_output[,1] = rep(seq(min_obs,max_obs), each=7)
+  obstacle_distances_output[,2] = rep(seq(min_obs,max_obs), 7)
+  
+  output=c()
+  for (i in min_obs:max_obs){
+    for (j in min_obs:max_obs){
+      obs1=which(mazeA== as.character(i))
+      obs1x= obs1 %% 11
+      obs1x[obs1x==0] =11
+      obs1y= ceiling(obs1/11)
+      obs2= which(mazeA== as.character(j))
+      obs2x= obs2 %% 11
+      obs2x[obs2x==0] =11
+      obs2y= ceiling(obs2/11)
+      
+      distance =c()
+      for (obsA in 1:length(obs1x)){
+        for (obsB in 1:length(obs2x)){
+          distance= c(distance, abs(obs1x[obsA]-obs2x[obsB]) + abs(obs1y[obsA]-obs2y[obsB]))
+        }
+      }
+    
+      output= c(output,min(distance))
+    }
+  }
+  obstacle_distances_output[,3]=output
+  return(obstacle_distances_output)
+}
+
+
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+maze_stats_new[,16:22] =NaN
+
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+
+    count=1
+    rank_temp= matrix(, nrow = 7, ncol = 7)
+    distance= matrix(, nrow = 7, ncol = 7)
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      # order svg
+      rank_temp[count,] = order(obs_temp[,3])-1
+      distance[count,]= obs_temp[order(obs_temp[,3]),3]
+      count= count+1
+    }
+    
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,16:22]=rank_temp
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,23:29]=distance
+}
+
+
+# now replace rank order with awareness 
+maze_stats_new= maze_stats_new[!is.nan(maze_stats_new$chunking1sVGC),]
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,17], sep=''))
+
+data$obs1=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+mean(maze_stats_new[,24], na.rm=TRUE)
+mean(maze_stats_new[,25], na.rm=TRUE)
+mean(maze_stats_new[,26], na.rm=TRUE)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,18], sep=''))
+data$obs2=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,19], sep=''))
+data$obs3=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,20], sep=''))
+data$obs4=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,21], sep=''))
+data$obs5=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,22], sep=''))
+data$obs6=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+###
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs1)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs1=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs2)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs2=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs3)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs3=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs4)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs4=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs5)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs5=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs6)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs6=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+data$Atten_obs1Z= scale(as.numeric(data$Atten_obs1))[,1]
+data$Atten_obs2Z= scale(as.numeric(data$Atten_obs2))[,1]
+data$Atten_obs3Z= scale(as.numeric(data$Atten_obs3))[,1]
+data$Atten_obs4Z= scale(as.numeric(data$Atten_obs4))[,1]
+data$Atten_obs5Z= scale(as.numeric(data$Atten_obs5))[,1]
+data$Atten_obs6Z= scale(as.numeric(data$Atten_obs6))[,1]
+data$attention_N_Z= scale(as.numeric(data$attention_N))[,1]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm1= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId) + static_vgc_weight_Z+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= data)
+anova(lm0,lm1, lm1.1)
+sjPlot::tab_model(lm1)
+
+permuted_maze_states=maze_stats_new[!is.na(maze_stats_new$V16),]
+permuted_dictionary_of_mazes=dictionary_of_maze[!is.na(maze_stats_new$V16)]
+
+nperm=1000
+betacoeff1= array(, dim= nperm)
+betacoeff2= array(, dim= nperm)
+betacoeff3= array(, dim= nperm)
+betacoeff4= array(, dim= nperm)
+betacoeff5= array(, dim= nperm)
+betacoeff6= array(, dim= nperm)
+
+obstacle_list= c('obs-0','obs-1', 'obs-2', 'obs-3', 'obs-4', 'obs-5', 'obs-6')
+
+
+for (i in 1:nperm){
+
+  # randomize list of mazes in specific order
+  randsam=c(replicate(12, sample(1:7)))
+  rand_index=unlist(lapply(1:12, function(x) sample((7*(x-1))+(1:7))))
+  
+  dictionary_of_maze=paste(stringr::str_remove(permuted_maze_states$grid, '-0'), permuted_maze_states$obstacle)
+  
+    tolist_of_maze=paste(stringr::str_remove(permuted_maze_states$grid, '-0'), permuted_maze_states$obstacle[rand_index])
+  
+  data$permobs1=plyr::mapvalues(data$obs1, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  data$permobs2=plyr::mapvalues(data$obs2, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  data$permobs3=plyr::mapvalues(data$obs3, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  data$permobs4=plyr::mapvalues(data$obs4, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  data$permobs5=plyr::mapvalues(data$obs5, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  data$permobs6=plyr::mapvalues(data$obs6, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  
+  ## remove repeats of original so that the obstacle we are probing isnt in list of permuted items (no 'self-awareness' of obstacles)
+  
+  for (j in 1:dim(data)[1]){
+    
+    odd_one_out=setdiff(unlist(lapply(data$grid[j], paste, obstacle_list)), c(as.matrix(data[j,56:61])))
+    
+    if(paste(data$grid[j], data$obstacle[j]) %in% c(as.matrix(data[j,56:61]))){
+      
+      index= which(c(as.matrix(data[j,56:61])) %in% paste(data$grid[j], data$obstacle[j])) +55
+      
+      data[j,index]= odd_one_out
+    }
+  }
+  
+  
+    ###
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs1)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+  data$Atten_permobs1=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs2)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+  data$Atten_permobs2=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs3)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+  data$Atten_permobs3=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs4)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+  data$Atten_permobs4=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs5)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+data$Atten_permobs5=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+
+  toconvert_of_maze= paste(data$sessionId, data$round, data$permobs6)
+  dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+  tolist_of_maze= data$attention_N
+
+  data$Atten_permobs6=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze, warn_missing = FALSE)
+  
+  data$Atten_permobs1Z= scale(as.numeric(data$Atten_permobs1))[,1]
+  data$Atten_permobs2Z= scale(as.numeric(data$Atten_permobs2))[,1]
+  data$Atten_permobs3Z= scale(as.numeric(data$Atten_permobs3))[,1]
+  data$Atten_permobs4Z= scale(as.numeric(data$Atten_permobs4))[,1]
+  data$Atten_permobs5Z= scale(as.numeric(data$Atten_permobs5))[,1]
+  data$Atten_permobs6Z= scale(as.numeric(data$Atten_permobs6))[,1]
+
+lm_perm= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId) + static_vgc_weight_Z+ Atten_permobs1Z + Atten_permobs2Z + Atten_permobs3Z + Atten_permobs4Z + Atten_permobs5Z + Atten_permobs6Z, data= data)
+
+betacoeff1[i]= summary(lm_perm)$coefficients[3,1]
+betacoeff2[i]= summary(lm_perm)$coefficients[4,1]
+betacoeff3[i]= summary(lm_perm)$coefficients[5,1]
+betacoeff4[i]= summary(lm_perm)$coefficients[6,1]
+betacoeff5[i]= summary(lm_perm)$coefficients[7,1]
+betacoeff6[i]= summary(lm_perm)$coefficients[8,1]
+
+if ((i %% 100) ==0){
+  print(i)
+}
+
+}
+
+mean(betacoeff1)
+sd(betacoeff1)
+
+# permuted p val
+(sum(summary(lm1)$coefficients[3,1] < betacoeff1)+1) / (nperm+1)
+# 0.000999001
+(sum(summary(lm1)$coefficients[4,1] < betacoeff2)+1) / (nperm+1)
+# 0.000999001
+(sum(summary(lm1)$coefficients[5,1] < betacoeff3)+1) / (nperm+1)
+# 0.7892108
+(sum(summary(lm1)$coefficients[6,1] < betacoeff4)+1) / (nperm+1)
+# 0.8241758
+(sum(summary(lm1)$coefficients[7,1] > betacoeff5)+1) / (nperm+1)
+# 0.01098901
+(sum(summary(lm1)$coefficients[8,1] > betacoeff6)+1) / (nperm+1)
+# 0.03996004
+
+
+
+data4plot = summary(lm1)$coefficients
+data4plot= data4plot[-1,]
+data4plot= data4plot[-1,]
+
+data4plot2 = summary(lm1)$coefficients
+data4plot2= data4plot2[-1,]
+data4plot2= data4plot2[-1,]
+data4plot=rbind(data4plot, data4plot2)
+
+data4plot[7:12,1] =c(mean(betacoeff1), mean(betacoeff2), mean(betacoeff3), mean(betacoeff4), mean(betacoeff5), mean(betacoeff6))
+
+data4plot[7:12,2] =c(sd(betacoeff1)/ sqrt(1000), sd(betacoeff2)/ sqrt(1000), sd(betacoeff3)/ sqrt(1000), sd(betacoeff4)/ sqrt(1000), sd(betacoeff5)/ sqrt(1000), sd(betacoeff6)/ sqrt(1000))
+
+data4plot= as.data.frame(data4plot)
+colnames(data4plot)[2] = 'Std.Error'
+data4plot$mazetype= rep(c('observed', 'null'), each= 6)
+data4plot$distance= 1:6
+
+
+ggplot(data4plot, aes(x=distance, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error, colour = mazetype, fill= mazetype)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4) + geom_path(size=1.25) + ggpubr::theme_classic2()  + geom_errorbar( width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values=c('#899499', '#F36A17')) + scale_color_manual(values=c('#899499', '#F36A17')) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_by_maze_type_null.pdf', device = "pdf", width= 7, height =5)
+
+
+
+```
+
+
+
+```{r Effects of spatial context on awarwe exp 2}
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_2_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+maze_stats_new[,16:22] =NaN
+
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+
+    count=1
+    rank_temp= matrix(, nrow = 7, ncol = 7)
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      # order svg
+      rank_temp[count,] = order(obs_temp[,3])-1
+      count= count+1
+    }
+    
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,16:22]=rank_temp
+}
+
+
+# now replace rank order with awareness 
+maze_stats_new= maze_stats_new[!is.nan(maze_stats_new$chunking1sVGC),]
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,17], sep=''))
+
+data$obs1=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,18], sep=''))
+data$obs2=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,19], sep=''))
+data$obs3=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,20], sep=''))
+data$obs4=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,21], sep=''))
+data$obs5=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,22], sep=''))
+data$obs6=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+###
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs1)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs1=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs2)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs2=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs3)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs3=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs4)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs4=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs5)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs5=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs6)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs6=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+data$Atten_obs1Z= scale(as.numeric(data$Atten_obs1))[,1]
+data$Atten_obs2Z= scale(as.numeric(data$Atten_obs2))[,1]
+data$Atten_obs3Z= scale(as.numeric(data$Atten_obs3))[,1]
+data$Atten_obs4Z= scale(as.numeric(data$Atten_obs4))[,1]
+data$Atten_obs5Z= scale(as.numeric(data$Atten_obs5))[,1]
+data$Atten_obs6Z= scale(as.numeric(data$Atten_obs6))[,1]
+data$attention_N_Z= scale(as.numeric(data$attention_N))[,1]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm1= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= data)
+anova(lm0,lm1, lm1.1)
+sjPlot::tab_model(lm1)
+
+# it seems like the closest items are most weighted and furthest items are down weighting 
+
+# Test if effect still holds after removing the model prediction effect
+data$resids=scale(residuals(lm1.1))
+lm1.2= lm(resids ~   Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= data)
+sjPlot::tab_model(lm1.2)
+
+# plot effects
+
+data4plot = summary(lm1)$coefficients
+data4plot= data4plot[-1,]
+colnames(data4plot)[2]= "Std.Error" 
+
+library(ggplot2)
+
+ggplot(data4plot, aes(x=1:6, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4, color= '#F36A17') + geom_path(color= '#F36A17',size=1.25) + ggpubr::theme_classic2()  + geom_errorbar(fill= '#F36A17', color= '#F36A17', width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_exp2.pdf', device = "pdf", width= 6, height =5)
+
+
+# check if this effect differs for ignoring vs attending 
+
+data$importnat = data$static_vgc_weight > 0.5
+datacrit= data[data$importnat,]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= datacrit)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= datacrit)
+lm1= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datacrit)
+anova(lm0,lm1, lm1.1)
+sjPlot::tab_model(lm1)
+
+datacrit= data[!data$importnat,]
+
+lm0= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId), data= datacrit)
+lm1.1= lmer(attention_N_Z ~  (1 | grid)+ (1 | sessionId) + static_vgc_weight_Z, data= datacrit)
+lm2= lmer(attention_N_Z ~  (1 | grid) + (1 | sessionId)+ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datacrit)
+anova(lm0,lm2, lm1.1)
+sjPlot::tab_model(lm2)
+
+
+data4plot = summary(lm1)$coefficients
+data4plot= data4plot[-1,]
+
+data4plot2 = summary(lm2)$coefficients
+data4plot2= data4plot2[-1,]
+data4plot=rbind(data4plot, data4plot2)
+colnames(data4plot)[2]= "Std.Error" 
+data4plot= as.data.frame(data4plot)
+data4plot$mazetype= rep(c('relevant', 'irrelevant'), each= 6)
+data4plot$distance= 1:6
+
+ggplot(data4plot, aes(x=distance, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error, colour = mazetype, fill= mazetype)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4) + geom_path(size=1.25) + ggpubr::theme_classic2()  + geom_errorbar( width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values=c('#D3D3D3', '#F36A17')) + scale_color_manual(values=c('#D3D3D3', '#F36A17')) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_by_relv_irrelv_exp2.pdf', device = "pdf", width= 6, height =5)
+
+
+```
+
+
+```{r Effects of distance on awareness fit model per person exp 2}
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_2_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+maze_stats_new[,16:22] =NaN
+
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+
+    count=1
+    rank_temp= matrix(, nrow = 7, ncol = 7)
+    distance= matrix(, nrow = 7, ncol = 7)
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      # order svg
+      rank_temp[count,] = order(obs_temp[,3])-1
+      distance[count,]= obs_temp[order(obs_temp[,3]),3]
+      count= count+1
+    }
+    
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,16:22]=rank_temp
+    maze_stats_new[maze_stats_new$grid == grid_name_temp,23:29]=distance
+}
+
+
+# now replace rank order with awareness 
+maze_stats_new= maze_stats_new[!is.nan(maze_stats_new$chunking1sVGC),]
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,17], sep=''))
+
+data$obs1=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+mean(maze_stats_new[,24], na.rm=TRUE)
+mean(maze_stats_new[,25], na.rm=TRUE)
+mean(maze_stats_new[,26], na.rm=TRUE)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,18], sep=''))
+data$obs2=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,19], sep=''))
+data$obs3=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,20], sep=''))
+data$obs4=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,21], sep=''))
+data$obs5=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+tolist_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), paste('obs-', maze_stats_new[,22], sep=''))
+data$obs6=plyr::mapvalues(index_mazes, dictionary_of_maze, tolist_of_maze)
+
+###
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs1)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs1=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs2)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs2=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs3)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs3=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs4)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs4=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs5)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs5=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+toconvert_of_maze= paste(data$sessionId, data$round, data$obs6)
+dictionary_of_maze= paste(data$sessionId, data$round, data$grid, data$obstacle)
+tolist_of_maze= data$attention_N
+
+data$Atten_obs6=plyr::mapvalues(toconvert_of_maze, dictionary_of_maze, tolist_of_maze)
+
+
+coeff_subj= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+coeff_lower= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+coeff_upper= matrix(, nrow = length(unique(data$sessionId)), ncol = 7)
+count=1
+subjkeep=c()
+for (subji in unique(data$sessionId)) {
+  
+  datatemp= data[data$sessionId == subji,]
+  
+  if(sd(datatemp$attention_N) !=0){
+
+    subjkeep= c(subjkeep, subji)
+  datatemp$Atten_obs1Z= scale(as.numeric(datatemp$Atten_obs1))[,1]
+  datatemp$Atten_obs2Z= scale(as.numeric(datatemp$Atten_obs2))[,1]
+  datatemp$Atten_obs3Z= scale(as.numeric(datatemp$Atten_obs3))[,1]
+  datatemp$Atten_obs4Z= scale(as.numeric(datatemp$Atten_obs4))[,1]
+  datatemp$Atten_obs5Z= scale(as.numeric(datatemp$Atten_obs5))[,1]
+  datatemp$Atten_obs6Z= scale(as.numeric(datatemp$Atten_obs6))[,1]
+  datatemp$attention_N_Z= scale(as.numeric(datatemp$attention_N))[,1]
+
+
+  lm1= lm(attention_N_Z ~ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z + Atten_obs6Z, data= datatemp)
+  
+  coeff_subj[count,]= summary(lm1)$coefficients[,1]
+  coeff_lower[count,]= confint(lm1)[,1]
+  coeff_upper[count,]= confint(lm1)[,2]
+  count= count+1
+  }
+
+}
+
+coeff_subj= coeff_subj[!is.na(coeff_subj[,1]),]
+coeff_lower= coeff_lower[!is.na(coeff_lower[,1]),]
+coeff_upper= coeff_upper[!is.na(coeff_upper[,1]),]
+
+apply(coeff_lower[,2:7] > 0 & coeff_upper[,2:7] > 0, rm.na=TRUE, 2, sum)
+# for sig beta effects positive
+# 96 82 13  7  9  9
+
+apply(coeff_lower[,2:7] < 0 & coeff_upper[,2:7] < 0, rm.na=TRUE, 2, sum)
+# for sig beta effects positive
+# 1  3 12 33 43 65
+
+apply(coeff_subj, 2, mean)
+apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+apply(coeff_subj, 2, mean)+ apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+apply(coeff_subj, 2, mean)- apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+ttests=apply(coeff_subj[,2:7], 2, t.test)
+
+p.adjust(c(ttests[[1]]$p.value, ttests[[2]]$p.value, ttests[[3]]$p.value,ttests[[4]]$p.value, ttests[[5]]$p.value, ttests[[6]]$p.value ), method = 'fdr')
+
+data4plot= stack(as.data.frame(coeff_subj[,-1]))
+data4plot$ind = plyr::mapvalues(data4plot$ind, c('V1','V2', 'V3', 'V4', 'V5', 'V6'), 1:6)
+distances2plot= stack(maze_stats_new[,24:29])
+distances2plot$ind = plyr::mapvalues(distances2plot$ind, c('V24','V25', 'V26', 'V27', 'V28', 'V29'), 1:6)
+
+data4plot$subID = rep(subjkeep, 6)
+
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17' )) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + ggdist::stat_halfeye(adjust = 0.5, justification = -0.6, width = 0.5, alpha = 0.75) + geom_boxplot( outliers = FALSE, width=0.45)  + ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) + theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_individual_level_exp2.pdf', device = "pdf", width= 7, height =5)
+
+
+data4plot=data4plot[data4plot$subID != 'Uw1W53wtIb',]
+jitter_pos=position_jitter(width = .1, height = 0, seed = 1)
+
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17', colour = '#F36A17', group= subID)) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + geom_path(size=0.7,alpha=0.1, linetype= 'solid', color= '#CA6F07', fill= '#CA6F07',position = jitter_pos)  + geom_point(size=3,alpha=0.2,colour = '#F36A17',position = jitter_pos)+ ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) +  scale_colour_manual(values ='#F36A17' )+  theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_individual_level_line_plot_exp2.pdf', device = "pdf", width= 7, height =5)
+
+
+
+slopes=c()
+fits= c()
+count=1
+for (subji in sort(unique(data4plot$subID))) {
+  
+  print(subji)
+  datatemp= data4plot[data4plot$subID == subji,]
+  datatemp$ind = as.integer(datatemp$ind)
+  
+  lm1= lm(values ~ ind, data= datatemp)
+  slopes[count] = summary(lm1)$coefficients[2,1]
+  fits[count]= summary(lm1)$r.squared
+  count=count+1
+
+}
+
+
+
+ggplot(data=data.frame(slopes), aes(x=1, y=slopes, color='#D97D08', fill= '#D97D08'))+
+  ggdist::stat_halfeye(adjust = .5, width = .1, justification = -.75, alpha=0.5, point_alpha= 0) + geom_boxplot(width = .1, outlier.shape = NA, colour= '#888888') + scale_fill_manual(values=c('#D97D08')) + scale_color_manual(values=c('#D97D08')) + ylab("neighbour slope") + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') + ggpubr::theme_classic2() + coord_flip()
+
+#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_hist_of_subjects.pdf', device = "pdf", width= 5, height =1)
+
+
+# top subjects 
+tops=unique(data4plot$subID)[order(slopes)[1:16]]
+
+tops_a=data[data$sessionId %in% tops,] %>% group_by(grid, obstacle) %>% summarise(mean_awa= mean(attention_N))
+
+# worst subjects 
+bottoms=unique(data4plot$subID)[order(slopes)[141:156]]
+bottoms_a=data[data$sessionId %in% bottoms,] %>% group_by(grid, obstacle) %>% summarise(mean_awa= mean(attention_N))
+
+tops_a$bottoms=bottoms_a$mean_awa
+
+#write.csv(tops_a, '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/top_bottoms_slopes_effects.csv')
+
+
+
+sd_aware=data[data$sessionId %in% unique(data4plot$subID),] %>% group_by(sessionId, grid, round) %>% summarise(sd_awa= var(attention_N))
+
+sd_aware= sd_aware %>% group_by(sessionId) %>% summarise(mean_sd= mean(sd_awa))
+sd_aware= sd_aware[order(sd_aware$sessionId),]
+
+cor.test(slopes, sd_aware$mean_sd, method = 'spearman')
+
+data4plotting= data.frame(slopes= slopes, sd_aware= sd_aware$mean_sd)
+
+ggplot(data4plotting, aes(x=slopes, y= sd_aware, color='1', fill= '1')) +  geom_point() + theme_classic() + xlab("slope of neighbour effect") +  ylab("construal size (sd)") + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= TRUE, fullrange = T) + scale_fill_manual(values=c('#D97D08')) + scale_color_manual(values=c('#D97D08'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/constural_size_slope_effect_exp2.pdf', device = "pdf", width= 7, height =5)
+
+
+
+
+
+```
+
+
+```{r check lateralization of original experiment 1}
+
+# load data
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+# group mazes for analysis (Note taking mean of every item does nothing in this case as all values are the same!)
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+dictionary_of_maze=unique(unlist(strsplit(maze_stats$grid, '-0')))[2:17]
+dictionary_of_maze[1] = 'grid-0'
+
+maze_stats=maze_stats[!is.na(maze_stats$side),]
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+# compute lateralization effects for L/R 
+latmazesLR= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+maze_stats=maze_stats[!is.na(maze_stats$quad),]
+temp=maze_stats %>% group_by(grid, quad) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+# compute lateralization effects for superior/inferior
+latmazes= data.frame(grid = unique(temp$grid),
+  hlat_dVGC =abs((temp$sumdVGC[temp$quad=='U'] - temp$sumdVGC[temp$quad=='L']) / (temp$sumdVGC[temp$quad=='U'] + temp$sumdVGC[temp$quad=='L'])),
+  hlat_sVGC= abs((temp$sumsVGC[temp$quad=='U'] - temp$sumsVGC[temp$quad=='L']) / (temp$sumsVGC[temp$quad=='U'] + temp$sumsVGC[temp$quad=='L'])))
+
+
+index_mazes=paste(data$grid, data$obstacle)
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazesLR$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazesLR$lat_sVGC))
+
+data$hor_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$hlat_dVGC))
+data$hor_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$hlat_sVGC))
+
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+
+data$hor_dVGC_scaled= scale(data$hor_values_dVGC)[,1]
+data$hor_sVGC_scaled= scale(data$hor_values_sVGC)[,1]
+
+
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+
+
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * hor_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+
+
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC),hor_sVGC= mean(hor_values_sVGC), hor_dVGC= mean(hor_values_dVGC) )
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=7)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=7)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=7)
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC, fill= lat_sVGC, group = factor(lat_sVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=hor_sVGC, fill= hor_sVGC, group = factor(hor_sVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_interaction_plot_continuous_lateralized_horizontal_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+```
+
+
+
+```{r check lateralization of original experiment 2}
+
+#expriment with awareness probes, but obstacles disapear after participants starts to move
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_2_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+dictionary_of_maze=unique(unlist(strsplit(maze_stats$grid, '-0')))[2:17]
+dictionary_of_maze[1] = 'grid-0'
+
+maze_stats=maze_stats[!is.na(maze_stats$side),]
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazesLR= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+
+maze_stats=maze_stats[!is.na(maze_stats$quad),]
+temp=maze_stats %>% group_by(grid, quad) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  hlat_dVGC =abs((temp$sumdVGC[temp$quad=='U'] - temp$sumdVGC[temp$quad=='L']) / (temp$sumdVGC[temp$quad=='U'] + temp$sumdVGC[temp$quad=='L'])),
+  hlat_sVGC= abs((temp$sumsVGC[temp$quad=='U'] - temp$sumsVGC[temp$quad=='L']) / (temp$sumsVGC[temp$quad=='U'] + temp$sumsVGC[temp$quad=='L'])))
+
+# make sure the two model predictions are related!
+cor.test(latmazesLR$lat_dVGC, latmazesLR$lat_sVGC)
+cor.test(latmazes$hlat_dVGC, latmazes$hlat_sVGC)
+
+cor.test(latmazesLR$lat_sVGC, latmazes$hlat_sVGC)
+cor.test(latmazesLR$lat_dVGC, latmazes$hlat_dVGC)
+
+index_mazes=paste(data$grid, data$obstacle)
+
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazesLR$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazesLR$lat_sVGC))
+
+data$hor_values_dVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$hlat_dVGC))
+data$hor_values_sVGC=as.numeric(plyr::mapvalues(data$grid, dictionary_of_maze, latmazes$hlat_sVGC))
+
+
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+
+data$hor_dVGC_scaled= scale(data$hor_values_dVGC)[,1]
+data$hor_sVGC_scaled= scale(data$hor_values_sVGC)[,1]
+
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+
+
+lm0= lmer(attention_N ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z + hor_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z * hor_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+
+
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + lat_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+# we see a smaller (but still significant effect!)
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC),hor_sVGC= mean(hor_values_sVGC), hor_dVGC= mean(hor_values_dVGC) )
+
+# remove intercept of each maze 
+temp=data_plot %>% group_by(grid) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+
+data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=7)
+data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=7)
+data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=7)
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC, fill= lat_sVGC, group = factor(lat_sVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_awareness, color=lat_dVGC, fill= lat_dVGC, group = factor(lat_dVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_interaction_plot_continuous_lateralized_dVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=hor_sVGC, fill= hor_sVGC, group = factor(hor_sVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_interaction_plot_continuous_lateralized_horizontal_sVGC.pdf', device = "pdf", width= 6, height =5)
+
+ggplot(data_plot, aes(x=mean_dVGC, y= mean_awareness, color=hor_dVGC, fill= hor_dVGC, group = factor(hor_dVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1)) 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_interaction_plot_continuous_lateralized_horizontal_dVGC.pdf', device = "pdf", width= 6, height =5)
+
+
+data$Lateralized.factor = data$lateralized_values_sVGC >=0.40
+data$Lateralized.factor= factor(plyr::mapvalues(data$Lateralized.factor, c(1,0), c('lateralized', 'non-lateralized')), levels = c('non-lateralized', 'lateralized'))
+data$binarysVGC= data$static_vgc_weight > 0.5
+data$binarysVGC= plyr::mapvalues(data$binarysVGC, c(1,0), c('relevant', 'irrelevant'))
+
+ggplot(data, aes(attention_N, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor, nrow = 1)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIG_EXP_2_hist_of_awareness_by_maze_type2.pdf', device = "pdf", width= 10, height =5)
+
+
+p.adjust(c(7.491e-05,0.478,0.001,0.013), method = 'fdr')
+
+```
+
+Let us build a new model of VGC with spatail attention effects 
+
+```{r Calculate averaging for experiment 1 DONE}
+
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+# function to compute manhattan distance between all pairs of obstacles 
+obstacle_distances <- function(mazeA){
+  number_obs= length(unique(as.numeric(mazeA)))-1
+  max_obs= max(as.numeric(mazeA), na.rm = TRUE)
+  min_obs= min(as.numeric(mazeA), na.rm = TRUE)
+  mazeA[mazeA=='G']=NaN
+  mazeA[mazeA=='S']=NaN
+  mazeA[mazeA=='.']=NaN
+  mazeA[mazeA=='#']=NaN
+
+  obstacle_distances_output= matrix(, nrow=number_obs*number_obs, 3)
+  obstacle_distances_output[,1] = rep(seq(min_obs,max_obs), each=7)
+  obstacle_distances_output[,2] = rep(seq(min_obs,max_obs), 7)
+  
+  output=c()
+  for (i in min_obs:max_obs){
+    for (j in min_obs:max_obs){
+      obs1=which(mazeA== as.character(i))
+      obs1x= obs1 %% 11
+      obs1x[obs1x==0] =11
+      obs1y= ceiling(obs1/11)
+      obs2= which(mazeA== as.character(j))
+      obs2x= obs2 %% 11
+      obs2x[obs2x==0] =11
+      obs2y= ceiling(obs2/11)
+      
+      distance =c()
+      for (obsA in 1:length(obs1x)){
+        for (obsB in 1:length(obs2x)){
+          distance= c(distance, abs(obs1x[obsA]-obs2x[obsB]) + abs(obs1y[obsA]-obs2y[obsB]))
+        }
+      }
+    
+      output= c(output,min(distance))
+    }
+  }
+  obstacle_distances_output[,3]=output
+  return(obstacle_distances_output)
+}
+
+
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+k_min=3
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    sVGC_new = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    
+    dVGC = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    dVGC_new = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    
+    count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      dVGC_new[count] = dVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+      dVGC_new[count] = 0.5*dVGC[obs_self] + 0.5*mean(dVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_new$new_sVGC[maze_stats_new$grid == grid_name_temp]=sVGC_new
+    maze_stats_new$new_dVGC[maze_stats_new$grid == grid_name_temp]=dVGC_new
+}
+
+write.csv(maze_stats_new, '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/Original_maze_Atten_model_pred.csv')
+
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+
+data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+
+data$chunkingsVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$chunking1sVGC))
+
+data$maxdistsVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$maxdistsVGC))
+
+data$new_sVGC.zscored= scale(data$new_sVGC)[,1]
+data$new_dVGC.zscored= scale(data$new_dVGC)[,1]
+data$dchunkingsVGC.zscored= scale(data$chunkingsVGC)[,1]
+data$maxdistsVGC.zscored= scale(data$maxdistsVGC)[,1]
+data$attention_N.zscored= scale(data$attention_N)[,1]
+
+lm0= lmer(attention_N.zscored ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ new_sVGC.zscored, data= data)
+anova(lm0,lm1, lm2)
+lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ dynamic_vgc_weight_Z, data= data)
+#lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ maxdistsVGC.zscored, data= data)
+anova(lm0,lm1, lm2, lm3)
+BIC(lm2)-BIC(lm1)
+BIC(lm3)-BIC(lm1)
+BIC(lm2)-BIC(lm3)
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention_N), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),new_sVGC= mean(new_sVGC), chunksVGC= mean(chunkingsVGC) )
+
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness))+  geom_point(color= '#B9E615', size=4) + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes(), method='lm', se= TRUE, fullrange = T, color= '#B9E615', fill= '#B9E615', size=1.25) + geom_point(aes(x=new_sVGC, y= mean_awareness), color= '#F36A17', size=4) + geom_smooth(aes(x=new_sVGC, y= mean_awareness), method='lm', se= TRUE, fullrange = T, color= '#F36A17', fill= '#F36A17', size=1.25)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_new_averaging_model_sVGC_k_3.pdf', device = "pdf", width= 6, height =5)
+
+```
+
+
+
+```{r experiment 1 into train and test discovery}
+
+update_maze_states <- function(k_min, maze_stats_new){
+count=1
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    sVGC_new = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    
+    dVGC = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    dVGC_new = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    
+    count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      dVGC_new[count] = dVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+      dVGC_new[count] = 0.5*dVGC[obs_self] + 0.5*mean(dVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_new$new_sVGC[maze_stats_new$grid == grid_name_temp]=sVGC_new
+    maze_stats_new$new_dVGC[maze_stats_new$grid == grid_name_temp]=dVGC_new
+}
+return(maze_stats_new)
+}
+
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+# order data before splitting
+data=data[order(data$X),]
+# get number of trials
+trial_no=dim(data)[1]/7
+
+nperm= 500
+chosen_k= numeric(nperm)
+BIC_test_old=numeric(nperm)
+BIC_test_new= numeric(nperm)
+# loop over possible k here and apply model to data 
+for (p in 1:nperm){
+
+  
+  rand_order=sample(trial_no) # randomize order of trials
+  
+  train= rand_order[1:round(trial_no*.7)]
+  test= rand_order[(round(trial_no*.7)+1):trial_no]
+  
+  index_train=unlist(lapply(train, function(x) ((x-1)*7)+(1:7)))
+  index_test=unlist(lapply(test, function(x) ((x-1)*7)+(1:7)))
+  
+    
+    AIC_sVGC= numeric(10)
+    BIC_sVGC= numeric(10)
+    AIC_dVGC= numeric(10)
+    BIC_dVGC= numeric(10)
+  for (k in c(1,2,3,4,5,6,7,8,9,10)){
+    rm(maze_stats_new)
+    maze_stats_new=maze_stats
+    maze_stats_new=update_maze_states(k, maze_stats_new)
+    
+    index_mazes=paste(data$grid, data$obstacle)
+  dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+  
+    data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+    data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+    
+    data$new_sVGC= as.numeric(data$new_sVGC)
+    data$new_dVGC= as.numeric(data$new_dVGC)
+    
+    data$new_sVGC.zscore= scale(data$new_sVGC)[,1]
+    data$new_dVGC.zscore= scale(data$new_dVGC)[,1]
+    
+    # only apply to subset
+    dataReg= data[index_train,]
+    lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId) + new_sVGC.zscore, data= dataReg)
+    AIC_sVGC[k]= AIC(lm2)
+    BIC_sVGC[k]= BIC(lm2)
+  
+  }
+  
+  chosen_k[p]=order(BIC_sVGC)[1]
+  
+    rm(maze_stats_new)
+    maze_stats_new=maze_stats
+  maze_stats_new=update_maze_states(chosen_k[p], maze_stats_new)
+    
+    index_mazes=paste(data$grid, data$obstacle)
+  dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+  
+    data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+    data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+    
+    data$new_sVGC= as.numeric(data$new_sVGC)
+    data$new_dVGC= as.numeric(data$new_dVGC)
+    
+    data$new_sVGC.zscore= scale(data$new_sVGC)[,1]
+    data$new_dVGC.zscore= scale(data$new_dVGC)[,1]
+    
+    # only apply to subset
+    dataReg= data[index_test,]
+    lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId) + new_sVGC.zscore, data= dataReg)
+    BIC_test_new[p]= BIC(lm2)
+  
+  lm2= lmer(attention_N ~  (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= dataReg)
+  BIC_test_old[p]=BIC(lm2)
+
+}
+
+table(chosen_k)
+
+hist(BIC_test_new-BIC_test_old)
+
+data4plot= data.frame(BIC=c(BIC_test_old-BIC_test_new), model=rep(c('diff'), each=nperm))
+
+ggplot(data4plot, aes(BIC, colour = model, fill=model)) + geom_density(alpha=0.5) + ggpubr::theme_classic2() + xlab('difference in BIC') + geom_vline(xintercept = 0, linetype= 'dotted', size=2, color= 'grey')
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_corssvalidation_test_attention_model.pdf', device = "pdf", width= 6, height =5)
+
+#p val 
+(sum(BIC_test_old-BIC_test_new < 0)+1)/501
+
+#0.001996008
+
+```
+
+
+
+
+
+```{r Calculate averaging for experiment 2 DONE}
+
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_2_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+k_min=3
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    sVGC_new = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    
+    dVGC = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    dVGC_new = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    
+ count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      dVGC_new[count] = dVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+      dVGC_new[count] = 0.5*dVGC[obs_self] + 0.5*mean(dVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_new$new_sVGC[maze_stats_new$grid == grid_name_temp]=sVGC_new
+    maze_stats_new$new_dVGC[maze_stats_new$grid == grid_name_temp]=dVGC_new
+}
+
+
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+
+data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+
+
+data$chunkingsVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$chunking1sVGC))
+
+data$new_sVGC.zscored= scale(data$new_sVGC)[,1]
+data$new_dVGC.zscored= scale(data$new_dVGC)[,1]
+data$dchunkingsVGC.zscored= scale(data$chunkingsVGC)[,1]
+data$attention_N.zscored= scale(data$attention_N)[,1]
+
+lm0= lmer(attention_N.zscored ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ new_sVGC.zscored, data= data)
+anova(lm0,lm1, lm2)
+lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ dchunkingsVGC.zscored, data= data)
+anova(lm0,lm1, lm2, lm3)
+BIC(lm2)-BIC(lm1)
+BIC(lm3)-BIC(lm1)
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(grid, obstacle) %>% summarise(mean_awareness= mean(attention_N), mean_sVGC= mean(static_vgc_weight), mean_dVGC= mean(dynamic_vgc_weight),new_sVGC= mean(new_sVGC), new_dVGC= mean(new_dVGC) )
+
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness))+  geom_point(color= '#B9E615', size=4) + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes(), method='lm', se= TRUE, fullrange = T, color= '#B9E615', fill= '#B9E615', size=1.25) + geom_point(aes(x=new_sVGC, y= mean_awareness), color= '#F36A17', size=4) + geom_smooth(aes(x=new_sVGC, y= mean_awareness), method='lm', se= TRUE, fullrange = T, color= '#F36A17', fill= '#F36A17', size=1.25)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_new_averaging_model_sVGC_k_3.pdf', device = "pdf", width= 6, height =5)
+
+# replot the histograms of the original and new predictions 
+
+
+dataplot= data %>% group_by(grid, obstacle) %>% summarise(attention_N= mean(attention_N), new_sVGC= mean(static_vgc_weight))
+
+dataplot$binarysVGC= dataplot$new_sVGC > 0.5
+dataplot$binarysVGC= plyr::mapvalues(dataplot$binarysVGC, c(1,0), c('relevant', 'irrelevant'))
+
+dataplot2= data %>% group_by(grid, obstacle) %>% summarise(attention_N= mean(attention_N), new_sVGC= mean(new_sVGC))
+
+dataplot2$binarysVGC= dataplot2$new_sVGC > 0.5
+dataplot2$binarysVGC= plyr::mapvalues(dataplot2$binarysVGC, c(1,0), c('relevant', 'irrelevant'))
+
+dataplot=rbind(dataplot,dataplot2)
+dataplot$model = rep(c('original', 'attentional'), each=84)
+
+ggplot(dataplot, aes(attention_N, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~model)
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment2_new_averaging_model_sVGC_histogram.pdf', device = "pdf", width= 10, height =5)
+
+
+```
+
+
+
+```{r Permutation test nulls of new model based on maze experiment 1 }
+
+# function that takes in json inputs and converts to matrix for simple math
+json2matrix <- function(mazeA){
+  m=t(matrix(unlist(strsplit(mazeA, split='')), nrow = 11))
+  return(m)
+}
+
+# function to compute manhattan distance between all pairs of obstacles 
+obstacle_distances <- function(mazeA){
+  number_obs= length(unique(as.numeric(mazeA)))-1
+  max_obs= max(as.numeric(mazeA), na.rm = TRUE)
+  min_obs= min(as.numeric(mazeA), na.rm = TRUE)
+  mazeA[mazeA=='G']=NaN
+  mazeA[mazeA=='S']=NaN
+  mazeA[mazeA=='.']=NaN
+  mazeA[mazeA=='#']=NaN
+
+  obstacle_distances_output= matrix(, nrow=number_obs*number_obs, 3)
+  obstacle_distances_output[,1] = rep(seq(min_obs,max_obs), each=7)
+  obstacle_distances_output[,2] = rep(seq(min_obs,max_obs), 7)
+  
+  output=c()
+  for (i in min_obs:max_obs){
+    for (j in min_obs:max_obs){
+      obs1=which(mazeA== as.character(i))
+      obs1x= obs1 %% 11
+      obs1x[obs1x==0] =11
+      obs1y= ceiling(obs1/11)
+      obs2= which(mazeA== as.character(j))
+      obs2x= obs2 %% 11
+      obs2x[obs2x==0] =11
+      obs2y= ceiling(obs2/11)
+      
+      distance =c()
+      for (obsA in 1:length(obs1x)){
+        for (obsB in 1:length(obs2x)){
+          distance= c(distance, abs(obs1x[obsA]-obs2x[obsB]) + abs(obs1y[obsA]-obs2y[obsB]))
+        }
+      }
+    
+      output= c(output,min(distance))
+    }
+  }
+  obstacle_distances_output[,3]=output
+  return(obstacle_distances_output)
+}
+
+
+library(dplyr)
+library(lme4)
+library(ggplot2)
+
+data = read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiment_1_data.csv')
+
+temp=data %>% group_by(grid,obstacle) %>% summarise(goal_dist= mean(goal_dist), start_dist= mean(start_dist), wall_dist= mean(walls_dist), center_dist= mean(center_dist), dVGC= mean(dynamic_vgc_weight), sVGC= mean(static_vgc_weight))
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/original_stimuli_stats.csv', na.strings = 'NaN')
+
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazes_0-11.json')
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
+
+k_min=3
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    sVGC_new = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    
+    dVGC = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    dVGC_new = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    
+    count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      dVGC_new[count] = dVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+      dVGC_new[count] = 0.5*dVGC[obs_self] + 0.5*mean(dVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_new$new_sVGC[maze_stats_new$grid == grid_name_temp]=sVGC_new
+    maze_stats_new$new_dVGC[maze_stats_new$grid == grid_name_temp]=dVGC_new
+}
+
+write.csv(maze_stats_new, '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/Original_maze_Atten_model_pred.csv')
+
+index_mazes=paste(data$grid, data$obstacle)
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, '-0'), maze_stats_new$obstacle)
+
+data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+
+data$new_sVGC.zscored= scale(data$new_sVGC)[,1]
+data$attention_N.zscored= scale(data$attention_N)[,1]
+
+lm0= lmer(attention_N.zscored ~  (1 | grid)+ (1 | sessionId), data= data)
+lm1= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ new_sVGC.zscored, data= data)
+
+
+permuted_maze_states=maze_stats_new[!is.na(maze_stats_new$new_sVGC),]
+permuted_dictionary_of_mazes=dictionary_of_maze[!is.na(maze_stats_new$new_sVGC)]
+
+betacoeff= c()
+BICperm=c()
+nperm=1000
+for (i in 1:nperm){
+
+  rand_index=unlist(lapply(1:12, function(x) sample(7))) # Hgamma
+  rand_index= rand_index+rep((7*(0:11)), each=7)
+  
+  # now let us permute the mazes 
+  data$perm_sVGC=as.numeric(plyr::mapvalues(index_mazes, permuted_dictionary_of_mazes[rand_index], permuted_maze_states$new_sVGC))
+  data$nperm_sVGC.zscored= scale(data$perm_sVGC)[,1]
+
+lmp= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ nperm_sVGC.zscored, data= data)
+
+betacoeff= c(betacoeff,summary(lmp)$coefficients[2,1])
+BICperm= c(BIC(lmp), BICperm)
+
+}
+
+# permuted p val
+(sum(summary(lm2)$coefficients[2,1] < betacoeff)+1) / (nperm+1)
+
+# 0.000999001
+
+data4plot= data.frame(BIC=c(betacoeff), model=rep(c('diff'), each=nperm))
+
+ggplot(data4plot, aes(BIC, colour = model, fill=model)) + geom_density(alpha=0.5) + ggpubr::theme_classic2() + xlab('standerdized beta coeff') + geom_vline(xintercept = summary(lm2)$coefficients[2,1], linetype= 'dotted', size=2, color= 'grey') + geom_vline(xintercept = summary(lm1)$coefficients[2,1], linetype= 'dotted', size=2, color= '#6A6663') + scale_fill_manual(values = c('#EF7414')) + scale_colour_manual(values = c('#EF7414')) 
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_corssvalidation_test_for_spatial_smoothness_obstacles_betacoeff.pdf', device = "pdf", width= 6, height =5)
+
+
+# try spatial smoothing after permuting the VOR predictions within a maze 
+# the two permuations above retain some 
+
+
+# # # # # # # # # # # # # # 
+# now let us permute the obstacles WITHIN a maze 
+
+
+betacoeff= c()
+BICperm=c()
+nperm=1000
+
+for (p in 1:nperm ){
+
+maze_stats_perm= maze_stats
+
+k_min=3
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_perm$sVGC[maze_stats_perm$grid == grid_name_temp]
+    sVGC_new = maze_stats_perm$sVGC[maze_stats_perm$grid == grid_name_temp]
+    
+    # permute SVGC
+    sVGC= sVGC[sample(1:7)]
+    
+    count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_perm$sVGC[maze_stats_perm$grid == grid_name_temp]=sVGC
+    maze_stats_perm$new_sVGC[maze_stats_perm$grid == grid_name_temp]=sVGC_new
+}
+
+
+
+  data$perm_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_perm$new_sVGC))
+  data$nperm_sVGC.zscored= scale(data$perm_sVGC)[,1]
+
+lmp= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ nperm_sVGC.zscored, data= data)
+
+betacoeff= c(betacoeff,summary(lmp)$coefficients[2,1])
+BICperm= c(BIC(lmp), BICperm)
+
+}
+
+# permuted p val
+(sum(summary(lm2)$coefficients[2,1] < betacoeff)+1) / (nperm+1)
+
+data4plot= data.frame(BIC=c(betacoeff), model=rep(c('diff'), each=nperm))
+
+ggplot(data4plot, aes(BIC, colour = model, fill=model)) + geom_density(alpha=0.5) + ggpubr::theme_classic2() + xlab('standerdized beta coeff') + geom_vline(xintercept = summary(lm2)$coefficients[2,1], linetype= 'dotted', size=2, color= 'grey') + geom_vline(xintercept = summary(lm1)$coefficients[2,1], linetype= 'dotted', size=2, color= '#6A6663') + scale_fill_manual(values = c('#EF7414')) + scale_colour_manual(values = c('#EF7414')) 
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/ORIGINAL_experiment1_corssvalidation_test_for_spatial_smoothness_obstaclesPREAVG_betacoeff.pdf', device = "pdf", width= 6, height =5)
+
+```
+
+
+
+
+
+
