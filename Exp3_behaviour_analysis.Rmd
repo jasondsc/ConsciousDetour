@@ -66,24 +66,28 @@ library(ggplot2)
 ```
 
 
-# NEED TO ADD COLUMN TO REMOVE BAD EYEMOVEMENT TRIALS !!!!! 
-
 
 ```{r read in behav data, clean it, & plot hist of aware reports}
 
 library(dplyr)
 library(ggplot2)
-data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/AllData.csv', na.strings = 'NaN',fileEncoding="latin1")
+data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/AllDataConcat.csv', na.strings = 'NaN',fileEncoding="latin1")
 
 colnames(data)[1] = 'Subject.Code'
 data$timedOut= data$Solution.RT > 20 # find trials where people took very long to answer
 
 # compute stats per maze ID and person
-test=data %>% group_by(MazeID, Lateralized) %>% summarise(summ= sum(timedOut))
+test=data %>% group_by(Subject.Code, Gender, Handiness) %>% summarise(age= mean(Age))
+# looks like any time out errors are not because of any particular maze
+
+
+
+# compute stats per maze ID and person
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(summ= sum(timedOut)/n())
 # looks like any time out errors are not because of any particular maze
 
 # are some participants just bad at this?
-test=data %>% group_by(Subject.Code) %>% summarise(summ= sum(timedOut)) # YES
+test=data %>% group_by(Subject.Code) %>% summarise(summ= sum(timedOut)/n()) # YES
 
 MazeRTstats=data %>% group_by(MazeID, Lateralized) %>% summarise(meanRT= mean(Solution.RT), SDRT= sd(Solution.RT))
 
@@ -134,10 +138,20 @@ data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_
 data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
 
 
+
+#clean up Maze ID names
+data$LateralizedText = plyr::mapvalues(data$Lateralized, c(0,1), c('-n', '-l'))
+data$gridText= plyr::mapvalues(data$grid, c(0:11), c('00', '01', '02', '03', '04', '05', '06', '07','08', '09', '10', '11'))
+
+# rename mazes so that it makes sense
+data$MazeID_clean= paste(data$gridText, data$LateralizedText, sep = '')
+
 # let use remove trials where people did not solve the maze in 20 seconds and where they deviated from the instructions (AKA did not have an optimal solution)
-# we remove trials where subjects took more than 5 extra moves 
-data= data[data$Solution.RT < 20,]
+
+# we remove trials where subjects took more than 9 extra moves 
 data$deltaMove= data$Moves+1 - data$OptimalMoves
+dataBAD= data # keep a copy for later
+data= data[data$Solution.RT < 20,]
 hist(data$deltaMove)
 # compute stats per maze ID and person
 test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= mean(deltaMove))
@@ -145,27 +159,33 @@ test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= mean(deltaM
 # are some participants just bad at this?
 test=data %>% group_by(Subject.Code) %>% summarise(deltaMove= mean(deltaMove)) # YES
 
-data$SuboptimalMoves = data$deltaMove >5 # find index of trials where people deviated from optimality 
+data$SuboptimalMoves = data$deltaMove >9 # find index of trials where people deviated from optimality 
+# this is three sd from the mean
 
 # compute stats per maze ID and person
-test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= sum(SuboptimalMoves))
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= sum(SuboptimalMoves)/n())
 
 # are some participants just bad at this?
 test=data %>% group_by(Subject.Code) %>% summarise(deltaMove= sum(SuboptimalMoves)) # YES
 
-data= data[data$deltaMove <5,]
+data= data[data$deltaMove <9,]
+dataBAD= dataBAD[dataBAD$Solution.RT >= 20 | dataBAD$deltaMove >=9,]
 # how many trials left per subject
 test=data %>% group_by(Subject.Code) %>% summarise(count= n()/6) # total number trial
 test=data %>% group_by(Subject.Code) %>% summarise(count= n()/576) # percent kept
 
+#remap the awareness reports of each subject 
 data$Aware.ReportObs.scaled= plyr::mapvalues(data$Aware.ReportObs, c(1,2,3,4,5,6,7,8,9), c(0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1))
 
 data$Lateralized.factor= factor(plyr::mapvalues(data$Lateralized, c(0,1), c('non-lateralized', 'lateralized')), levels = c('non-lateralized', 'lateralized'))
 
+# binarize the obstacles for plotting purpose to remake Figure 3a of Ho et al 
 data$binarysVGC= data$sVGC.Obs > 0.5
 data$binarysVGC= plyr::mapvalues(data$binarysVGC, c(1,0), c('relevant', 'irrelevant'))
 
-ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+data4plot = data %>% group_by(Subject.Code, binarysVGC, Lateralized.factor, MazeID_clean) %>% summarize(Aware.ReportObs.scaled = mean(Aware.ReportObs.scaled))
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
   geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
   theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
   labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
@@ -174,14 +194,22 @@ ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, f
 #ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/hist_of_awareness.pdf', device = "pdf", width= 6, height =5)
 
 
-ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
   geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
   theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
   labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
   ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
 
-#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/hist_of_awareness_by_maze_type.pdf', device = "pdf", width= 12, height =5)
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/hist_of_awareness_by_maze_type.pdf', device = "pdf", width= 12, height =5)
 
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type.pdf', device = "pdf", width= 12, height =5)
 
 ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
   geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
@@ -189,21 +217,58 @@ ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, f
   labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
   ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
 
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_alltrials.pdf', device = "pdf", width= 12, height =5)
 
-ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
-  geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
   theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
   labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
   ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor, nrow = 2)
 
-#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/hist_of_awareness_by_maze_type2.pdf', device = "pdf", width= 5, height =10)
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_layout.pdf', device = "pdf", width= 12, height =5)
 
+
+# now let us sort mazes by tercile 
+data$extremeLat=ntile(data$lateralized_values_sVGC,3)
+
+data$extremeLat= plyr::mapvalues(data$extremeLat, c(1,2,3), c('1st', '2nd', '3rd'))
+
+data4plot = data %>% group_by(Subject.Code, binarysVGC, extremeLat, MazeID_clean) %>% summarize(Aware.ReportObs.scaled = mean(Aware.ReportObs.scaled))
+
+data4plot =data4plot[!is.nan(data4plot$extremeLat),]
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~extremeLat)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_terciles.pdf', device = "pdf", width= 12, height =5)
+
+
+# save average awareness of each obstacle by maze
+tt=data %>% group_by(MazeID_clean, Obs.No) %>% summarise(attention_n= mean(Aware.ReportObs.scaled))
+
+write.csv(tt, file= '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/awareness_by_maze_stats.csv')
 
 ```
 
 
 
 ```{r Spatial context effects on awareness}
+
+data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
+data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
+data$Lateralized= factor(data$Lateralized)
+
+data$LateralizedText = plyr::mapvalues(data$Lateralized, c(0,1), c('-n', '-l'))
+data$gridText= plyr::mapvalues(data$grid, c(0:11), c('00', '01', '02', '03', '04', '05', '06', '07','08', '09', '10', '11'))
+
+# rename mazes so that it makes sense
+data$MazeID_clean= paste(data$gridText, data$LateralizedText, sep = '')
+
+
 
 data$Obs.No = data$Obs.No-1 # because of python
 
@@ -241,12 +306,6 @@ for (i in 1:length(json_data)){
     maze_stats_new[maze_stats_new$grid == grid_name_temp,21:26]=rank_temp
     maze_stats_new[maze_stats_new$grid == grid_name_temp,27:32]=distance
 }
-
-data$LateralizedText = plyr::mapvalues(data$Lateralized, c(0,1), c('-n', '-l'))
-data$gridText= plyr::mapvalues(data$grid, c(0:11), c('00', '01', '02', '03', '04', '05', '06', '07','08', '09', '10', '11'))
-
-# rename mazes so that it makes sense
-data$MazeID_clean= paste(data$gridText, data$LateralizedText, sep = '')
 
 # now replace rank order with awareness 
 index_mazes=paste(paste(data$gridText, data$LateralizedText, sep = ''), paste('obs-', data$Obs.No, sep = ''))
@@ -322,11 +381,11 @@ data4plot = summary(lm1)$coefficients
 data4plot= data4plot[-1,]
 colnames(data4plot)[2]= "Std.Error" 
 
-library(ggplot2)
 
 ggplot(data4plot, aes(x=1:5, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4, color= '#F36A17') + geom_path(color= '#F36A17',size=1.25) + ggpubr::theme_classic2()  + geom_errorbar(fill= '#F36A17', color= '#F36A17', width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') 
 
-#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights.pdf', device = "pdf", width= 6, height =5)
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/ranked_distances_weights.pdf', device = "pdf", width= 12, height =5)
+
 
 
 # check if this effect holds if we do it for task relevant and irrelevant seperately
@@ -356,27 +415,148 @@ data4plot$distance= 1:5
 
 ggplot(data4plot, aes(x=distance, y= Estimate, ymax= Estimate+ Std.Error, ymin= Estimate- Std.Error, colour = mazetype, fill= mazetype)) +  geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25) + geom_point(size=4) + geom_path(size=1.25) + ggpubr::theme_classic2()  + geom_errorbar( width=0, size=1.25)+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values=c('#F36A17', '#D3D3D3')) + scale_color_manual(values=c('#F36A17', '#D3D3D3')) 
 
-#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_weights_by_relv_irrelv.pdf', device = "pdf", width= 6, height =5)
-
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/ranked_distances_weights_bymazeType.pdf', device = "pdf", width= 12, height =5)
 
 #what is the mean distance of the closeest item?
 
 median(maze_stats_new[,28]) # median is 3 on the dot 
 mean(maze_stats_new[,28]) # 2.763
+sd(maze_stats_new[,28]) # 0.82772
+
+# a little closer to 4 squares for the 2nd rank (but so close to 0)
+median(maze_stats_new[,29]) # median is 3 on the dot 
+mean(maze_stats_new[,29]) # 2.763
+
+
+distances2plot= stack(maze_stats_new[,28:32])
+distances2plot$ind = plyr::mapvalues(distances2plot$ind, c('V28','V29', 'V30', 'V31', 'V32' ), 1:5)
+
+distances2plot= distances2plot[!is.na(distances2plot$values),]
+distances2plot %>% group_by(ind) %>% summarize(mean= mean(values), median=median(values), sd= sd(values))
+
+ggplot() + geom_boxplot(data=distances2plot, aes(y= values, x =ind, fill ='#609D68' ), outliers = FALSE, width=0.5)  + ggpubr::theme_classic2()+ ylab('distance between obstacles') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#609D68' ) + theme(legend.position = 'none')
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/results/R_plot_ranked_distances_new_mazes.pdf', device = "pdf", width= 5, height =5)
 
 ```
 
 
-# inter INDIVIDUAL DIFF IN AWARNESS EFFECTS 
+```{r Individual diff of distance effects on awareness}
+
+# Note run previous section and then run this one!
+# here we look at how distance impacts awareness PER PARTICIPANT
+coeff_subj= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_lower= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_upper= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+count=1
+subjkeep=c()
+for (subji in unique(data$Subject.Code)) {
+  
+  datatemp= data[data$Subject.Code == subji,]
+  
+  if(sd(datatemp$Aware.ReportObs.scaled) !=0){
+
+    # select out participant data and z-score within person! 
+    subjkeep= c(subjkeep, subji)
+    datatemp$Atten_obs1Z= scale(as.numeric(datatemp$Atten_obs1))[,1]
+    datatemp$Atten_obs2Z= scale(as.numeric(datatemp$Atten_obs2))[,1]
+    datatemp$Atten_obs3Z= scale(as.numeric(datatemp$Atten_obs3))[,1]
+    datatemp$Atten_obs4Z= scale(as.numeric(datatemp$Atten_obs4))[,1]
+    datatemp$Atten_obs5Z= scale(as.numeric(datatemp$Atten_obs5))[,1]
+    datatemp$attention_N_Z= scale(as.numeric(datatemp$Aware.ReportObs.scaled))[,1]
+
+  # fit linear model per peron and save corresponding outputs in matrix 
+  lm1= lm(attention_N_Z ~ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z, data= datatemp)
+  
+  coeff_subj[count,]= summary(lm1)$coefficients[,1]
+  coeff_lower[count,]= confint(lm1)[,1]
+  coeff_upper[count,]= confint(lm1)[,2]
+  count= count+1
+  }
+
+}
+
+coeff_subj= coeff_subj[!is.na(coeff_subj[,1]),]
+coeff_lower= coeff_lower[!is.na(coeff_lower[,1]),]
+coeff_upper= coeff_upper[!is.na(coeff_upper[,1]),]
+
+apply(coeff_subj, 2, mean)
+apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+apply(coeff_subj, 2, mean)+ apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+apply(coeff_subj, 2, mean)- apply(coeff_subj, 2, sd) / sqrt(length(coeff_subj[,1]))
+
+# see which beta coeffs are different than zero with t test 
+ttests=apply(coeff_subj[,1:6], 2, t.test)
+
+# adjust for multiple tests with fdr 
+p.adjust(c(ttests[[1]]$p.value, ttests[[2]]$p.value, ttests[[3]]$p.value,ttests[[4]]$p.value, ttests[[5]]$p.value), method = 'fdr')
+
+data4plot= stack(as.data.frame(coeff_subj[,-1]))
+data4plot$ind = plyr::mapvalues(data4plot$ind, c('V1','V2', 'V3', 'V4', 'V5'), 1:5)
+
+data4plot$subID = rep(subjkeep, 5)
+
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17' )) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + ggdist::stat_halfeye(adjust = 0.5, justification = -0.6, width = 0.5, alpha = 0.75) + geom_boxplot( outliers = FALSE, width=0.45)  + ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) + theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink//Ranked_distances_weights_individual_level.pdf', device = "pdf", width= 7, height =5)
+
+# outlier subject with very large beta effects (more tnan twice the largest effect)
+jitter_pos=position_jitter(width = .1, height = 0, seed = 1)
+
+
+# plot all participants betas (spatial effects)
+ggplot(data=data4plot, aes(y= values, x =ind, fill ='#F36A17', colour = '#F36A17', group= subID)) + geom_hline(yintercept = 0, linetype= 'dashed', color= '#899499', size=1.25)  + geom_path(size=0.7,alpha=0.1, linetype= 'solid', color= '#CA6F07', fill= '#CA6F07',position = jitter_pos)  + geom_point(size=3,alpha=0.2,colour = '#F36A17',position = jitter_pos)+ ggpubr::theme_classic2()+ ylab('standerdized beta coeff') + xlab('ranked distance from obstacle') + scale_fill_manual(values ='#F36A17' ) +  scale_colour_manual(values ='#F36A17' )+  theme(legend.position = 'none') + coord_cartesian(ylim = c(-0.6, 0.6))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink//Ranked_distances_weights_individual_level_line_plot.pdf', device = "pdf", width= 7, height =5)
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+# How do differences in attention effect relate to task performance?
+# relate magnitude of beta effect with sparsity of representation
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+slopes=c()
+fits= c()
+count=1
+for (subji in sort(unique(data4plot$subID))) {
+  
+  print(subji)
+  datatemp= data4plot[data4plot$subID == subji,]
+  datatemp$ind = as.integer(datatemp$ind)
+  
+  lm1= lm(values ~ ind, data= datatemp)
+  slopes[count] = summary(lm1)$coefficients[2,1]
+  fits[count]= summary(lm1)$r.squared
+  count=count+1
+
+}
+
+
+# compute the sparsity of the representation as the mean variance of their awareness
+# on each maze
+sd_aware=data[data$Subject.Code %in% unique(data4plot$subID),] %>% group_by(Subject.Code, MazeID_clean, Trial.Number) %>% summarise(sd_awa= var(Aware.ReportObs.scaled))
+
+sd_aware= sd_aware %>% group_by(Subject.Code) %>% summarise(mean_sd= mean(sd_awa))
+sd_aware= sd_aware[order(sd_aware$Subject.Code),]
+
+# test the linear relationship using spearman rank corr
+cor.test(slopes, sd_aware$mean_sd, method = 'spearman')
+
+data4plotting= data.frame(slopes= slopes, sd_aware= sd_aware$mean_sd)
+
+ggplot(data4plotting, aes(x=slopes, y= sd_aware, color='1', fill= '1')) +  geom_point() + theme_classic() + xlab("slope of neighbour effect") +  ylab("construal size (sd)") + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(method='lm', se= TRUE, fullrange = T) + scale_fill_manual(values=c('#D97D08')) + scale_color_manual(values=c('#D97D08'))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink//constural_size_slope_effect.pdf', device = "pdf", width= 7, height =5)
+
+
+```
+
+
+
+
 
 
 ```{r lateralization interaction effect: binary variable}
-
-library(lme4)
-
-data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
-data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
-data$Lateralized= factor(data$Lateralized)
 
 # need to add subject intercept!!
 lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code), data= data)
@@ -387,42 +567,29 @@ anova(lm0,lm1, lm2, lm3)
 
 sjPlot::tab_model(lm3)
 
-
 # significant interaction effect between awareness and sVGC, better fits (stronger relationship, when lateralized )
 
-# need to add subject intercept!!
-lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code), data= data)
-lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code) + dVGC.Obs.zscore, data= data)
-lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore + Lateralized, data= data)
-lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean)+ (1 | Subject.Code) + dVGC.Obs.zscore * Lateralized, data= data)
-anova(lm0,lm1, lm2, lm3)
 
-sjPlot::tab_model(lm3)
 # we observe the same thing for the dynamic construals 
-
-
-
 ggplot(data, aes(x=sVGC.Obs.zscore, y= Aware.ReportObs.scaled, color=Lateralized.factor, fill= Lateralized.factor))+  theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (z-scored)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
   stat_smooth(aes(color=Lateralized.factor, fill= Lateralized.factor), method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
 
 #ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/interaction_plot_sVGC.pdf', device = "pdf", width= 6, height =5)
 
 
-ggplot(data, aes(x=dVGC.Obs.zscore, y= Aware.ReportObs.scaled, color=Lateralized.factor, fill= Lateralized.factor))+  theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('dVGC (z-scored)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + scale_fill_manual(values=c('#B9E615', '#F36A17')) +
-  stat_smooth(aes(color=Lateralized.factor, fill= Lateralized.factor), method = "glm",formula = y ~ poly(x, 1),fullrange = T) + scale_color_manual(values=c('#B9E615', '#F36A17'))
-
-#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/interaction_plot_dVGC.pdf', device = "pdf", width= 6, height =5)
-
-
 # let us look at Moves and RT based on lateralization 
 lm3= lmer(deltaMove ~  (1 | MazeID_clean) + (1 | Subject.Code)+  Lateralized, data= data)
 sjPlot::tab_model(lm3)
-# weak effect of moves -> lateralized mazes are closer to optimal solution
+# no effect of delta Move
 
 lm3= lmer(Solution.RT ~  (1 | MazeID_clean) + (1 | Subject.Code)+  Lateralized, data= data)
 sjPlot::tab_model(lm3)
+# no effect of RT
 
-# weak effect of RTs 
+# look at random effects of mazes to pick the best for the next experiment 
+lm1Rand= lmer(Aware.ReportObs.scaled ~  (sVGC.Obs.zscore | MazeID_clean) + (1 | Subject.Code)+  sVGC.Obs.zscore, data= data)
+
+svgc_effects=coef(lm1Rand)$MazeID_clean
 
 ```
 
@@ -443,6 +610,7 @@ lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVG
 lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore + lat_sVGC_scaled, data= data)
 lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore * lat_sVGC_scaled, data= data)
 anova(lm0,lm1, lm2, lm3)
+anova(lm0,lm1, lm3)
 
 sjPlot::tab_model(lm3)
 
@@ -453,17 +621,16 @@ sjPlot::tab_model(lm3)
 lm3= lmer(Solution.RT ~  (1 | MazeID_clean) + (1 | Subject.Code)+ lat_sVGC_scaled, data= data)
 sjPlot::tab_model(lm3)
 
-# we observe weak effects of lateralization on the efficiency (speed and number of moves)
-
+# we observe a trend towards slower RTs on non-lateralized mazes, but effect is weak 
 
 # let us plot these lateralization effects 
 data_plot= data
 
 # summarize by maze 
-data_plot= data %>% group_by(grid, Lateralized, Obs.No) %>% summarise(mean_awareness= mean(Aware.ReportObs), mean_sVGC= mean(sVGC.Obs), mean_dVGC= mean(dVGC.Obs),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
+data_plot= data %>% group_by(MazeID_clean, Lateralized, Obs.No) %>% summarise(mean_awareness= mean(Aware.ReportObs), mean_sVGC= mean(sVGC.Obs), mean_dVGC= mean(dVGC.Obs),lat_sVGC= mean(lateralized_values_sVGC), lat_dVGC= mean(lateralized_values_dVGC))
 
 # remove intercept of each maze 
-temp=data_plot %>% group_by(grid, Lateralized) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
+temp=data_plot %>% group_by(MazeID_clean, Lateralized) %>% summarise(mean_awareness= mean(mean_awareness), mean_sVGC= mean(mean_sVGC), mean_dVGC= mean(mean_dVGC))
 
 data_plot$mean_awareness= data_plot$mean_awareness-  rep(temp$mean_awareness, each=6)
 data_plot$mean_sVGC= data_plot$mean_sVGC-  rep(temp$mean_sVGC, each=6)
@@ -471,8 +638,7 @@ data_plot$mean_dVGC= data_plot$mean_dVGC-  rep(temp$mean_dVGC, each=6)
 
 ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness, color=lat_sVGC, fill= lat_sVGC, group = factor(lat_sVGC)))+  geom_point() + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes( color=lat_sVGC, fill= lat_sVGC), method='lm', se= FALSE, fullrange = T) +  colorspace::scale_color_continuous_sequential(palette = 'Orange', limits = c(0,1)) + colorspace::scale_fill_continuous_sequential(palette = 'Orange',limits = c(0,1))
 
-ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 7, height =5)
-
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/interaction_plot_continuous_lateralized_sVGC.pdf', device = "pdf", width= 6, height =5)
 
 
 # explore lateralization effects along the horizontal meridian
@@ -481,9 +647,10 @@ lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ sVGC.Obs.
 lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ sVGC.Obs.zscore + horzlat_sVGC_scaled, data= data)
 lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ sVGC.Obs.zscore * horzlat_sVGC_scaled, data= data)
 anova(lm0,lm1, lm2, lm3)
+anova(lm0,lm1,lm3)
 
 sjPlot::tab_model(lm3)
-# trend but no effect! 
+# weaker effect in the opposite direction we expect 
 
 
 ```
@@ -532,48 +699,445 @@ AIC(lm3.1) - AIC(lm3.7))
 
 AICplot= data.frame(AIC= AIC_lesion, lesionedVar= factor(c('sVGC*Lateralized', 'Lateralized', 'sVGC', 'center distance', 'wall distance', 'start distance', 'goal distance'), levels = c('sVGC*Lateralized', 'Lateralized', 'sVGC', 'center distance', 'wall distance', 'start distance', 'goal distance')))
 
-ggplot(AICplot, aes(x=lesionedVar, y=AIC,width=.5 )) + geom_bar(stat = "identity", position=position_dodge(width = 0.5)) + ggpubr::theme_classic2() + scale_color_manual(values='#F36A17') + labs(y="delta AIC", x="lesioned parameter",title="") + theme(text = element_text(size=15), legend.title=element_blank(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+AICplot$AICCorr= log10(abs(AICplot$AIC)) * AICplot$AIC/abs(AICplot$AIC)
+
+ggplot(AICplot, aes(x=lesionedVar, y=AICCorr,width=.5 )) + geom_bar(stat = "identity", position=position_dodge(width = 0.5)) + ggpubr::theme_classic2() + scale_color_manual(values='#F36A17') + labs(y="delta AIC (log 10)", x="lesioned parameter",title="") + theme(text = element_text(size=15), legend.title=element_blank(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/esionAIC_plot_dVGC.pdf', device = "pdf", width= 12, height =5)
 
 
-ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/lesionAIC_plot_dVGC.pdf', device = "pdf", width= 6, height =5)
+# lateralization in the other direction does not survive nuisance covariates 
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean)  + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore, data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + dVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore + horzlat_sVGC_scaled, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore * horzlat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+sjPlot::tab_model(lm3)
 
 
 ```
 
-```{r fit spotlight model}
+```{r spotlight of attention model }
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazesfinal/Lateralized_mazes_stats.csv')
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+json_data <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazesfinal/mazes_Nonlateralized.json')
+
+json_data2 <- rjson::fromJSON(file='~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazesfinal/mazes_Lateralized.json')
+
+json_data <-append(json_data, json_data2)
+
+matrix_mazes=lapply(json_data, json2matrix)
+
+maze_stats_new= maze_stats
 
 
+k_min=3 # taken from previous results (see experiment 1 & 2) and the median distance 
+for (i in 1:length(json_data)){
+
+    grid_name_temp= names(matrix_mazes)[i]
+    temp= obstacle_distances(matrix_mazes[[i]])
+    sVGC = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    sVGC_new = maze_stats_new$sVGC[maze_stats_new$grid == grid_name_temp]
+    
+    dVGC = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    dVGC_new = maze_stats_new$dVGC[maze_stats_new$grid == grid_name_temp]
+    
+    count=1
+    for(j in unique(temp[,1])){
+      obs_temp=temp[temp[,1]==j,]
+      obs_self=obs_temp[,1]==j & obs_temp[,2] ==j
+      index= (obs_temp[,3] <= k_min) & (obs_temp[,3] != 0)
+      if(sum(index) == 0) {
+      sVGC_new[count] = sVGC[obs_self] 
+      dVGC_new[count] = dVGC[obs_self] 
+      }else
+      {
+      sVGC_new[count] = 0.5*sVGC[obs_self] + 0.5*mean(sVGC[index])
+      dVGC_new[count] = 0.5*dVGC[obs_self] + 0.5*mean(dVGC[index])
+}
+      count= count+1
+    }
+    maze_stats_new$new_sVGC[maze_stats_new$grid == grid_name_temp]=sVGC_new
+    maze_stats_new$new_dVGC[maze_stats_new$grid == grid_name_temp]=dVGC_new
+}
+
+write.csv(maze_stats_new, '~/Documents/ValueBasedConstrualTask/value-guided-construal-main/Lateralized_maze_Atten_model_pred.csv')
+
+data %>% group_by()
 
 
+# now replace rank order with awareness 
+index_mazes=paste(paste(data$gridText, data$LateralizedText, sep = ''), paste('obs-', data$Obs.No-1, sep = ''))
+dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, 'grid-0'), maze_stats_new$obstacle)
+
+data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+data$new_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
+
+data$new_sVGC.zscored= scale(data$new_sVGC)[,1]
+data$new_dVGC.zscored= scale(data$new_dVGC)[,1]
+data$attention_N.zscored= scale(data$Aware.ReportObs.scaled)[,1]
+data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
+data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
+
+test=data %>% group_by(MazeID_clean, Obs.No) %>% summarize(origSVGC= mean(sVGC.Obs), newSVGC= mean(new_sVGC))
+
+lm0= lmer(attention_N.zscored ~  (1 | MazeID_clean)+ (1 | Subject.Code), data= data)
+lm1= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore, data= data)
+lm2= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ new_sVGC.zscored, data= data)
+lm3= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore, data= data)
+sjPlot::tab_model(lm2)
+#lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ maxdistsVGC.zscored, data= data)
+BIC(lm2)-BIC(lm1)
+BIC(lm3)-BIC(lm1)
+BIC(lm2)-BIC(lm3)
+
+# split the AIC model by maze type to make sure that we are boosting the fit in the non_lateralized condition 
+# the model fit should remain pretty okay in the lateralized condition becuase the maze stimuli were designed with attention in mind and we know that the sVGC model predicts awareness in that condition pretty well
+dataNonLat= data[data$Lateralized==0,]
+lm0= lmer(attention_N.zscored ~  (1 | MazeID_clean)+ (1 | Subject.Code), data= dataNonLat)
+lm1= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore, data= dataNonLat)
+lm2= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ new_sVGC.zscored, data= dataNonLat)
+lm3= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore, data= dataNonLat)
+BIC(lm2)-BIC(lm1)
+
+dataLat= data[data$Lateralized==1,]
+lm0= lmer(attention_N.zscored ~  (1 | MazeID_clean)+ (1 | Subject.Code), data= dataLat)
+lm1= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore, data= dataLat)
+lm2= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ new_sVGC.zscored, data= dataLat)
+lm3= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore, data= dataLat)
+#lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ maxdistsVGC.zscored, data= data)
+BIC(lm2)-BIC(lm1)
+
+# Indeed this is what we observe, the benefit of the model is unqiuely for the non laterlaized mazes 
+
+
+# plot sVGC effect 
+data_plot= data
+
+# summarize by maze 
+data_plot= data %>% group_by(MazeID_clean, Obs.No) %>% summarise(mean_awareness= mean(Aware.ReportObs), mean_sVGC= mean(sVGC.Obs), mean_dVGC= mean(dVGC.Obs),new_sVGC= mean(new_sVGC))
+
+
+ggplot(data_plot, aes(x=mean_sVGC, y= mean_awareness))+  geom_point(color= '#B9E615', size=4) + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes(), method='lm', se= TRUE, fullrange = T, color= '#B9E615', fill= '#B9E615', size=1.25) + geom_point(aes(x=new_sVGC, y= mean_awareness), color= '#F36A17', size=4) + geom_smooth(aes(x=new_sVGC, y= mean_awareness), method='lm', se= TRUE, fullrange = T, color= '#F36A17', fill= '#F36A17', size=1.25)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/AttentionalSpotlightModelPredictions.pdf', device = "pdf", width= 12, height =5)
+
+
+# summarize by maze 
+data_plot= data %>% group_by(MazeID_clean, Obs.No, Lateralized) %>% summarise(mean_awareness= mean(Aware.ReportObs.scaled), mean_sVGC= mean(sVGC.Obs), mean_dVGC= mean(dVGC.Obs),new_sVGC= mean(new_sVGC))
+
+data_temp= rbind(data_plot,data_plot)
+data_temp$mean_sVGC[145:288]= data_temp$new_sVGC[1:144]
+data_temp$condition=1
+data_temp$condition[1:144]= rep(c('ol', 'ol', 'ol', 'ol', 'ol','ol', 'onl','onl','onl','onl','onl','onl'),12)
+
+data_temp$condition[145:288]= rep(c('nl', 'nl', 'nl', 'nl', 'nl','nl', 'nnl','nnl','nnl','nnl','nnl','nnl'),12)
+
+jitter_pos=position_jitter(width = .05, height = 0, seed = 1)
+
+
+ggplot(data_temp, aes(x=mean_sVGC, y= mean_awareness, colour = condition, fill= condition))+  geom_point( size=4, position = jitter_pos) + theme_classic() + xlab("") +  ylab("awareness reports (scaled)") + xlab('sVGC (scaled)')  + theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14)) + geom_smooth(aes(), method='lm', se= TRUE, fullrange = T, size=1.25) + facet_wrap(~Lateralized) + scale_colour_manual(values=c('#F36A17', '#F36A17','#B9E615','#B9E615')) + scale_fill_manual(values=c('#F36A17', '#F36A17','#B9E615', '#B9E615'))
+
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/AttentionalSpotlightModelPredictions_split_mazetype.pdf', device = "pdf", width= 12, height =5)
+
+# Create data
+data <- data.frame(
+  name=factor(c("non-lat old","non-lat new","lat old","lat new"), levels = c("non-lat old","non-lat new","lat old","lat new")) ,  
+  value=c(25568.31,25406.37,24652.63,24694.64)
+  )
+
+# Barplot
+ggplot(data, aes(x=name, y=value)) + 
+  geom_bar(stat = "identity") + coord_cartesian(ylim= c(24000, 25600))+ theme_classic() + xlab("") +  ylab("BIC") 
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/AttentionalSpotlightModelBIC.pdf', device = "pdf", width= 5, height =5)
 
 ```
 
 
 
 
- # to remove later in case we do not need this
-```{r block effects peliminary model}
+```{r try analysis without eye gaze trials}
 
-library(lme4)
-data$Block[data$Trial.Number < 72] =1
-data$Block[data$Trial.Number >=72 & data$Trial.Number < 144] =2
-data$Block[data$Trial.Number >=144 & data$Trial.Number < 216] =3
-data$Block[data$Trial.Number >=216 & data$Trial.Number < 288] =4
+library(dplyr)
+library(ggplot2)
+data= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/AllDataWithEyeTracking.csv', na.strings = 'NaN',fileEncoding="latin1")
+
+datatemp= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/AllDataConcat.csv', na.strings = 'NaN',fileEncoding="latin1")
+
+colnames(data)[1:18] = colnames(datatemp)[1:18]
+rm(datatemp)
+colnames(data)[1] = 'Subject.Code'
+data$timedOut= data$Solution.RT > 20 # find trials where people took very long to answer
+
+# compute stats per maze ID and person
+test=data %>% group_by(Subject.Code, Gender, Handiness) %>% summarise(age= mean(Age))
+# looks like any time out errors are not because of any particular maze
+
+
+
+# compute stats per maze ID and person
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(summ= sum(timedOut)/n())
+
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(summ= sum(toremove)/n())
+# looks like any time out errors are not because of any particular maze
+
+# are some participants just bad at this?
+test=data %>% group_by(Subject.Code) %>% summarise(summ= sum(timedOut)/n()) # YES
+
+# are some participants just bad at this?
+test=data %>% group_by(Subject.Code) %>% summarise(summ= sum(toremove)/n()) # YES
+
+
+MazeRTstats=data %>% group_by(MazeID, Lateralized) %>% summarise(meanRT= mean(Solution.RT), SDRT= sd(Solution.RT))
+
+
+# let us add some useful maze-stats to the data.frame to explore the data further
+# sVGC L/R lateralization
+# sVGC U/D lateralization
+# optimal number of moves
+
+maze_stats= read.csv('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/experiments/mazes/mazesfinal/Lateralized_mazes_stats.csv')
+maze_stats=maze_stats[order(maze_stats$grid),]
+
+temp=maze_stats %>% group_by(grid, side) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+latmazes= data.frame(grid = unique(temp$grid),
+  lat_dVGC =abs((temp$sumdVGC[temp$side=='R'] - temp$sumdVGC[temp$side=='L']) / (temp$sumdVGC[temp$side=='R'] + temp$sumdVGC[temp$side=='L'])),
+  lat_sVGC= abs((temp$sumsVGC[temp$side=='R'] - temp$sumsVGC[temp$side=='L']) / (temp$sumsVGC[temp$side=='R'] + temp$sumsVGC[temp$side=='L'])))
+
+temp=maze_stats %>% group_by(grid, Quad) %>% summarise(sumdVGC= sum(dVGC), sumsVGC= sum(sVGC))
+
+horzlatmazes= data.frame(grid = unique(temp$grid),
+  hlat_dVGC =abs((temp$sumdVGC[temp$Quad=='U'] - temp$sumdVGC[temp$Quad=='L']) / (temp$sumdVGC[temp$Quad=='U'] + temp$sumdVGC[temp$Quad=='L'])),
+  hlat_sVGC= abs((temp$sumsVGC[temp$Quad=='U'] - temp$sumsVGC[temp$Quad=='L']) / (temp$sumsVGC[temp$Quad=='U'] + temp$sumsVGC[temp$Quad=='L'])))
+
+dictionary_of_maze=unique(paste(maze_stats$lateralized, as.numeric(substr(maze_stats$grid, 7,8))))
+
+# make sure the two model predictions are related!
+cor.test(latmazes$lat_dVGC, latmazes$lat_sVGC)
+
+cor.test(horzlatmazes$hlat_dVGC, horzlatmazes$hlat_sVGC)
+
+data$grid= data$MazeID-1
+data$grid[data$grid>=12] = data$grid[data$grid>=12]-12
+
+index_mazes=paste(data$Lateralized, data$grid)
+
+# add lateralization effects to main data frame
+data$lateralized_values_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, latmazes$lat_dVGC))
+data$lateralized_values_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, latmazes$lat_sVGC))
+data$lateralized_horz_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, horzlatmazes$hlat_dVGC))
+data$lateralized_horz_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, horzlatmazes$hlat_sVGC))
+
+# add nuissance covariates to data frame
+data$OptimalMoves=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$Moves[order(maze_stats$grid)[seq(1, 144,6)]]))
+data$goal_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$goal_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
+data$start_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$start_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
+data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$wall_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
+data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
+
+
+
+#clean up Maze ID names
+data$LateralizedText = plyr::mapvalues(data$Lateralized, c(0,1), c('-n', '-l'))
+data$gridText= plyr::mapvalues(data$grid, c(0:11), c('00', '01', '02', '03', '04', '05', '06', '07','08', '09', '10', '11'))
+
+# rename mazes so that it makes sense
+data$MazeID_clean= paste(data$gridText, data$LateralizedText, sep = '')
+
+# let use remove trials where people did not solve the maze in 20 seconds and where they deviated from the instructions (AKA did not have an optimal solution)
+
+# we remove trials where subjects took more than 9 extra moves 
+data$deltaMove= data$Moves+1 - data$OptimalMoves
+dataBAD= data # keep a copy for later
+data= data[data$Solution.RT < 20,]
+hist(data$deltaMove)
+# compute stats per maze ID and person
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= mean(deltaMove))
+
+# are some participants just bad at this?
+test=data %>% group_by(Subject.Code) %>% summarise(deltaMove= mean(deltaMove)) # YES
+
+data$SuboptimalMoves = data$deltaMove >9 # find index of trials where people deviated from optimality 
+# this is three sd from the mean
+
+# compute stats per maze ID and person
+test=data %>% group_by(MazeID, Lateralized) %>% summarise(deltaMove= sum(SuboptimalMoves)/n())
+
+# are some participants just bad at this?
+test=data %>% group_by(Subject.Code) %>% summarise(deltaMove= sum(SuboptimalMoves)) # YES
+
+data= data[data$deltaMove <9,]
+data= data[data$toremove ==0,]
+dataBAD= dataBAD[dataBAD$Solution.RT >= 20 | dataBAD$deltaMove >=9,]
+dataBAD= dataBAD[dataBAD$Solution.RT >= 20 | dataBAD$deltaMove >=9 | data$toremove ==1,]
+
+# how many trials left per subject
+test=data %>% group_by(Subject.Code) %>% summarise(count= n()/6) # total number trial
+test=data %>% group_by(Subject.Code) %>% summarise(count= n()/576) # percent kept
+
+#remap the awareness reports of each subject 
+data$Aware.ReportObs.scaled= plyr::mapvalues(data$Aware.ReportObs, c(1,2,3,4,5,6,7,8,9), c(0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1))
+
+data$Lateralized.factor= factor(plyr::mapvalues(data$Lateralized, c(0,1), c('non-lateralized', 'lateralized')), levels = c('non-lateralized', 'lateralized'))
+
+# binarize the obstacles for plotting purpose to remake Figure 3a of Ho et al 
+data$binarysVGC= data$sVGC.Obs > 0.5
+data$binarysVGC= plyr::mapvalues(data$binarysVGC, c(1,0), c('relevant', 'irrelevant'))
+
+data4plot = data %>% group_by(Subject.Code, binarysVGC, Lateralized.factor, MazeID_clean) %>% summarize(Aware.ReportObs.scaled = mean(Aware.ReportObs.scaled))
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) 
+
+#ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/datapilot/hist_of_awareness.pdf', device = "pdf", width= 6, height =5)
+
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_histogram(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/hist_of_awareness_by_maze_type_EyeGaze_Removed.pdf', device = "pdf", width= 12, height =5)
+
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_EyeGaze_Removed.pdf', device = "pdf", width= 12, height =5)
+
+ggplot(data, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~Lateralized.factor)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_alltrials_EyeGaze_Removed.pdf', device = "pdf", width= 12, height =5)
+
+
+# now let us sort mazes by tercile 
+data$extremeLat=ntile(data$lateralized_values_sVGC,3)
+
+data$extremeLat= plyr::mapvalues(data$extremeLat, c(1,2,3), c('1st', '2nd', '3rd'))
+
+data4plot = data %>% group_by(Subject.Code, binarysVGC, extremeLat, MazeID_clean) %>% summarize(Aware.ReportObs.scaled = mean(Aware.ReportObs.scaled))
+
+data4plot =data4plot[!is.nan(data4plot$extremeLat),]
+
+ggplot(data4plot, aes(Aware.ReportObs.scaled, group= binarysVGC, color= binarysVGC, fill=binarysVGC, alpha=0.5)) +
+  geom_density(aes( color= binarysVGC, fill=binarysVGC, group= binarysVGC), alpha= 0.5, bins = 9, position = 'identity') +
+  theme(axis.text.x = element_text(size=14), axis.title.y = element_text(size=14), axis.text.y = element_text(size=14), legend.position = 'none') +
+  labs(x = "awareness of obstacle", y = "count")  + ggpubr::theme_classic2() +
+  ggtitle("") + scale_fill_manual(values=c('#B9E615', '#F36A17')) + scale_color_manual(values=c('#B9E615', '#F36A17')) + facet_wrap(~extremeLat)
+
+ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsEyeLink/density_of_awareness_by_maze_type_terciles_EyeGaze_Removed.pdf', device = "pdf", width= 12, height =5)
+
 
 data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
 data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
-data$Lateralized.zscore= scale(data$Lateralized)[,1]
+data$Lateralized= factor(data$Lateralized)
+
 
 # need to add subject intercept!!
-lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block, data= data)
-lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block+ sVGC.Obs.zscore, data= data)
-lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block + sVGC.Obs.zscore + Lateralized.zscore, data= data)
-lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ Block+ sVGC.Obs.zscore * Lateralized.zscore, data= data)
-lm4= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ Block+ sVGC.Obs.zscore * Lateralized.zscore*Block, data= data)
-anova(lm0,lm1, lm2, lm3, lm4)
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code), data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+  sVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore + Lateralized, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+  sVGC.Obs.zscore * Lateralized, data= data)
+anova(lm0,lm1, lm2, lm3)
 
 sjPlot::tab_model(lm3)
-# significant interaction effect between awareness and sVGC, better fits (stronger relationship, when lateralized )
+
+data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
+data$dVGC.Obs.zscore= scale(data$dVGC.Obs)[,1]
+data$lat_dVGC_scaled= scale(data$lateralized_values_dVGC)[,1]
+data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
+data$horzlat_dVGC_scaled= scale(data$lateralized_horz_dVGC)[,1]
+data$horzlat_sVGC_scaled= scale(data$lateralized_horz_sVGC)[,1]
+
+
+# need to add subject intercept!!
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code), data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore + lat_sVGC_scaled, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.Obs.zscore * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+anova(lm0,lm1, lm3)
+
+sjPlot::tab_model(lm3)
+
+
+data$goal_dist.zscore= scale(as.numeric(data$goal_dist))[,1]
+data$start_dist.zscore= scale(as.numeric(data$start_dist))[,1]
+data$wall_dist.zscore= scale(as.numeric(data$wall_dist))[,1]
+data$center_dist.zscore= scale(as.numeric(data$center_dist))[,1]
+
+
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean)  + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore, data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + dVGC.Obs.zscore, data= data)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore + lat_sVGC_scaled, data= data)
+lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ goal_dist.zscore + start_dist.zscore + wall_dist.zscore + center_dist.zscore + sVGC.Obs.zscore * lat_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+sjPlot::tab_model(lm3)
+
+```
+
+
+
+```{r explore suboptimal representations}
+
+#maybe the effects not working because we need to corr per trial rather than compute a deviation score 
+
+# get absolute deviation from model prediction
+data$ModelDeviation = abs(data$sVGC.Obs-data$Aware.ReportObs.scaled)
+
+data4reg = data %>% group_by(Subject.Code, Trial.Number, MazeID_clean, Lateralized) %>% summarize(RT = mean(Solution.RT), deltaMove= mean(deltaMove), ModelDeviation= sum(ModelDeviation))
+
+# need to add subject intercept!!
+lm0= lmer(RT ~  (1 | MazeID_clean) + (1 | Subject.Code) , data= data4reg)
+lm1= lmer(RT ~  (1 | MazeID_clean) + (1 | Subject.Code) + ModelDeviation, data= data4reg)
+anova(lm0,lm1)
+
+# need to add subject intercept!!
+lm0= lmer(deltaMove ~  (1 | MazeID_clean) + (1 | Subject.Code) , data= data4reg)
+lm1= lmer(deltaMove ~  (1 | MazeID_clean) + (1 | Subject.Code) + ModelDeviation, data= data4reg)
+anova(lm0,lm1)
+
+```
+
+# prediction is that participants will be faster on trials where awareness and VGC model prediction are more closeley related 
+
+# could try computing the corr first and then using this in the regression but unsure if this is the equivelant of a moderation effect 
+
+
+```{r explore what awareness is like on poor execution trials}
+
+
+dataBAD$sVGC.Obs.zscore= scale(dataBAD$sVGC.Obs)[,1]
+dataBAD$dVGC.Obs.zscore= scale(dataBAD$dVGC.Obs)[,1]
+dataBAD$Lateralized.zscore= scale(dataBAD$Lateralized)[,1]
+dataBAD$Aware.ReportObs.scaled= scale(dataBAD$Aware.ReportObs)[,1]
+
+# need to add subject intercept!!
+lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) , data= dataBAD)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + sVGC.Obs.zscore, data= dataBAD)
+lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + dVGC.Obs.zscore, data= dataBAD)
+anova(lm0,lm1,lm2)
+
+sjPlot::tab_model(lm1)
+# significant effect of sVGC and dVGC but they are very weak, explaining little var
+
+# shows that when people misconstrue their environments, their perfoemnace is worse 
 
 
 # need to add subject intercept!!

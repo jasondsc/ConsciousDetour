@@ -1306,6 +1306,16 @@ anova(lm0,lm1, lm2, lm3)
 sjPlot::tab_model(lm3)
 # we see a smaller (but still significant effect!)
 
+# add in nuissance covariates 
+# need to add subject intercept!!
+lm0= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId), data= data)
+lm1= lmer(attention_N ~ start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist + (1 | grid) + (1 | sessionId) + static_vgc_weight_Z, data= data)
+lm2= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z + hor_sVGC_scaled, data= data)
+lm3= lmer(attention_N ~  start_dist_Z+ goal_dist_Z + walls_dist_Z + center_dist +(1 | grid) + (1 | sessionId) + static_vgc_weight_Z * hor_sVGC_scaled, data= data)
+anova(lm0,lm1, lm2, lm3)
+
+sjPlot::tab_model(lm3)
+
 
 # plot sVGC effect 
 data_plot= data
