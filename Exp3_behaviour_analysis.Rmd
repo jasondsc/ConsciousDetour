@@ -132,11 +132,17 @@ data$lateralized_horz_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of
 
 # add nuissance covariates to data frame
 data$OptimalMoves=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$Moves[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$goal_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$goal_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$start_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$start_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$wall_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
 
+
+index_mazes=paste(data$Lateralized, data$grid, data$Obs.No-1)
+dictionary_of_maze=paste(rep(rep(c(1, 0),each=6), 12), rep(rep(unique(as.numeric(substr(maze_stats$grid, 7,8))),each=6), each=2), stringr::str_sub(maze_stats$obstacle,5))
+data$hemi=plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$side)
+data$quad=plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$Quad)
+data$goal_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, 
+maze_stats$goal_dist))
+data$start_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$start_dist))
+data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$wall_dist))
+data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist))
 
 
 #clean up Maze ID names
@@ -424,8 +430,8 @@ mean(maze_stats_new[,28]) # 2.763
 sd(maze_stats_new[,28]) # 0.82772
 
 # a little closer to 4 squares for the 2nd rank (but so close to 0)
-median(maze_stats_new[,29]) # median is 3 on the dot 
-mean(maze_stats_new[,29]) # 2.763
+median(maze_stats_new[,29]) 
+mean(maze_stats_new[,29]) 
 
 
 distances2plot= stack(maze_stats_new[,28:32])
@@ -553,6 +559,174 @@ ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsE
 
 
 
+```{r Individual diff validation training set }
+
+# Note run previous section and then run this one!
+# here we look at how distance impacts awareness PER PARTICIPANT
+# train the slopes on lateralized mazes and test the sd in non-lat 
+coeff_subj= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_lower= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_upper= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+count=1
+subjkeep=c()
+for (subji in unique(data$Subject.Code)) {
+  
+  datatemp= data[data$Subject.Code == subji & data$Lateralized==1,]
+  
+  if(sd(datatemp$Aware.ReportObs.scaled) !=0){
+
+    # select out participant data and z-score within person! 
+    subjkeep= c(subjkeep, subji)
+    datatemp$Atten_obs1Z= scale(as.numeric(datatemp$Atten_obs1))[,1]
+    datatemp$Atten_obs2Z= scale(as.numeric(datatemp$Atten_obs2))[,1]
+    datatemp$Atten_obs3Z= scale(as.numeric(datatemp$Atten_obs3))[,1]
+    datatemp$Atten_obs4Z= scale(as.numeric(datatemp$Atten_obs4))[,1]
+    datatemp$Atten_obs5Z= scale(as.numeric(datatemp$Atten_obs5))[,1]
+    datatemp$attention_N_Z= scale(as.numeric(datatemp$Aware.ReportObs.scaled))[,1]
+
+  # fit linear model per peron and save corresponding outputs in matrix 
+  lm1= lm(attention_N_Z ~ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z, data= datatemp)
+  
+  coeff_subj[count,]= summary(lm1)$coefficients[,1]
+  coeff_lower[count,]= confint(lm1)[,1]
+  coeff_upper[count,]= confint(lm1)[,2]
+  count= count+1
+  }
+
+}
+
+coeff_subj= coeff_subj[!is.na(coeff_subj[,1]),]
+coeff_lower= coeff_lower[!is.na(coeff_lower[,1]),]
+coeff_upper= coeff_upper[!is.na(coeff_upper[,1]),]
+
+data4plot= stack(as.data.frame(coeff_subj[,-1]))
+data4plot$ind = plyr::mapvalues(data4plot$ind, c('V1','V2', 'V3', 'V4', 'V5'), 1:5)
+
+data4plot$subID = rep(subjkeep, 5)
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+# How do differences in attention effect relate to task performance?
+# relate magnitude of beta effect with sparsity of representation
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+slopes=c()
+fits= c()
+count=1
+for (subji in sort(unique(data4plot$subID))) {
+  
+  print(subji)
+  datatemp= data4plot[data4plot$subID == subji,]
+  datatemp$ind = as.integer(datatemp$ind)
+  
+  lm1= lm(values ~ ind, data= datatemp)
+  slopes[count] = summary(lm1)$coefficients[2,1]
+  fits[count]= summary(lm1)$r.squared
+  count=count+1
+
+}
+
+
+# compute the sparsity of the representation as the mean variance of their awareness
+# on each maze
+sd_aware=data[data$Subject.Code %in% unique(data4plot$subID) & data$Lateralized==0,] %>% group_by(Subject.Code, MazeID_clean, Trial.Number) %>% summarise(sd_awa= var(Aware.ReportObs.scaled))
+
+sd_aware= sd_aware %>% group_by(Subject.Code) %>% summarise(mean_sd= mean(sd_awa))
+sd_aware= sd_aware[order(sd_aware$Subject.Code),]
+
+# test the linear relationship using spearman rank corr
+cor.test(slopes, sd_aware$mean_sd, method = 'spearman')
+
+#S = 10560, p-value = 0.003974
+#alternative hypothesis: true rho is not equal to 0
+#sample estimates:
+#       rho 
+#-0.4789916 
+
+
+# # # # # # # # # # # # # # # # # # # # 
+# train the slopes on non-lateralized mazes and test the sd in lat 
+# # # # # # # # # # # # # # # # # # # # 
+coeff_subj= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_lower= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+coeff_upper= matrix(, nrow = length(unique(data$Subject.Code)), ncol = 6)
+count=1
+subjkeep=c()
+for (subji in unique(data$Subject.Code)) {
+  
+  datatemp= data[data$Subject.Code == subji & data$Lateralized==0,]
+  
+  if(sd(datatemp$Aware.ReportObs.scaled) !=0){
+
+    # select out participant data and z-score within person! 
+    subjkeep= c(subjkeep, subji)
+    datatemp$Atten_obs1Z= scale(as.numeric(datatemp$Atten_obs1))[,1]
+    datatemp$Atten_obs2Z= scale(as.numeric(datatemp$Atten_obs2))[,1]
+    datatemp$Atten_obs3Z= scale(as.numeric(datatemp$Atten_obs3))[,1]
+    datatemp$Atten_obs4Z= scale(as.numeric(datatemp$Atten_obs4))[,1]
+    datatemp$Atten_obs5Z= scale(as.numeric(datatemp$Atten_obs5))[,1]
+    datatemp$attention_N_Z= scale(as.numeric(datatemp$Aware.ReportObs.scaled))[,1]
+
+  # fit linear model per peron and save corresponding outputs in matrix 
+  lm1= lm(attention_N_Z ~ Atten_obs1Z + Atten_obs2Z + Atten_obs3Z + Atten_obs4Z + Atten_obs5Z, data= datatemp)
+  
+  coeff_subj[count,]= summary(lm1)$coefficients[,1]
+  coeff_lower[count,]= confint(lm1)[,1]
+  coeff_upper[count,]= confint(lm1)[,2]
+  count= count+1
+  }
+
+}
+
+coeff_subj= coeff_subj[!is.na(coeff_subj[,1]),]
+coeff_lower= coeff_lower[!is.na(coeff_lower[,1]),]
+coeff_upper= coeff_upper[!is.na(coeff_upper[,1]),]
+
+data4plot= stack(as.data.frame(coeff_subj[,-1]))
+data4plot$ind = plyr::mapvalues(data4plot$ind, c('V1','V2', 'V3', 'V4', 'V5'), 1:5)
+
+data4plot$subID = rep(subjkeep, 5)
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+# How do differences in attention effect relate to task performance?
+# relate magnitude of beta effect with sparsity of representation
+# # # # # # # # # # # # # # # # # # # # # # # # # #
+slopes=c()
+fits= c()
+count=1
+for (subji in sort(unique(data4plot$subID))) {
+  
+  print(subji)
+  datatemp= data4plot[data4plot$subID == subji,]
+  datatemp$ind = as.integer(datatemp$ind)
+  
+  lm1= lm(values ~ ind, data= datatemp)
+  slopes[count] = summary(lm1)$coefficients[2,1]
+  fits[count]= summary(lm1)$r.squared
+  count=count+1
+
+}
+
+
+# compute the sparsity of the representation as the mean variance of their awareness
+# on each maze
+sd_aware=data[data$Subject.Code %in% unique(data4plot$subID) & data$Lateralized==1,] %>% group_by(Subject.Code, MazeID_clean, Trial.Number) %>% summarise(sd_awa= var(Aware.ReportObs.scaled))
+
+sd_aware= sd_aware %>% group_by(Subject.Code) %>% summarise(mean_sd= mean(sd_awa))
+sd_aware= sd_aware[order(sd_aware$Subject.Code),]
+
+# test the linear relationship using spearman rank corr
+cor.test(slopes, sd_aware$mean_sd, method = 'spearman')
+
+#	Spearman's rank correlation rho
+
+#S = 10124, p-value = 0.01309
+#alternative hypothesis: true rho is not equal to 0
+#sample estimates:
+#       rho 
+#-0.4179272 
+
+```
 
 
 
@@ -769,7 +943,7 @@ data %>% group_by()
 
 
 # now replace rank order with awareness 
-index_mazes=paste(paste(data$gridText, data$LateralizedText, sep = ''), paste('obs-', data$Obs.No-1, sep = ''))
+index_mazes=paste(paste(data$gridText, data$LateralizedText, sep = ''), paste('obs-', data$Obs.No, sep = ''))
 dictionary_of_maze= paste(stringr::str_remove(maze_stats_new$grid, 'grid-0'), maze_stats_new$obstacle)
 
 data$new_dVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats_new$new_sVGC))
@@ -801,6 +975,8 @@ lm1= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ sVGC.O
 lm2= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ new_sVGC.zscored, data= dataNonLat)
 lm3= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore, data= dataNonLat)
 BIC(lm2)-BIC(lm1)
+BIC(lm1)-BIC(lm3)
+BIC(lm2)-BIC(lm3)
 
 dataLat= data[data$Lateralized==1,]
 lm0= lmer(attention_N.zscored ~  (1 | MazeID_clean)+ (1 | Subject.Code), data= dataLat)
@@ -809,6 +985,9 @@ lm2= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ new_sV
 lm3= lmer(attention_N.zscored ~  (1 | MazeID_clean) + (1 | Subject.Code)+ dVGC.Obs.zscore, data= dataLat)
 #lm3= lmer(attention_N.zscored ~  (1 | grid) + (1 | sessionId)+ maxdistsVGC.zscored, data= data)
 BIC(lm2)-BIC(lm1)
+BIC(lm1)-BIC(lm3)
+BIC(lm2)-BIC(lm3)
+
 
 # Indeed this is what we observe, the benefit of the model is unqiuely for the non laterlaized mazes 
 
@@ -935,12 +1114,17 @@ data$lateralized_horz_sVGC=as.numeric(plyr::mapvalues(index_mazes, dictionary_of
 
 # add nuissance covariates to data frame
 data$OptimalMoves=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$Moves[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$goal_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$goal_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$start_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$start_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$wall_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
-data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist[order(maze_stats$grid)[seq(1, 144,6)]]))
 
 
+index_mazes=paste(data$Lateralized, data$grid, data$Obs.No-1)
+dictionary_of_maze=paste(rep(rep(c(1, 0),each=6), 12), rep(rep(unique(as.numeric(substr(maze_stats$grid, 7,8))),each=6), each=2), stringr::str_sub(maze_stats$obstacle,5))
+data$hemi=plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$side)
+data$quad=plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$Quad)
+data$goal_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, 
+maze_stats$goal_dist))
+data$start_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$start_dist))
+data$wall_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$wall_dist))
+data$center_dist=as.numeric(plyr::mapvalues(index_mazes, dictionary_of_maze, maze_stats$center_dist))
 
 #clean up Maze ID names
 data$LateralizedText = plyr::mapvalues(data$Lateralized, c(0,1), c('-n', '-l'))
@@ -1091,72 +1275,4 @@ anova(lm0,lm1, lm2, lm3)
 sjPlot::tab_model(lm3)
 
 ```
-
-
-
-```{r explore suboptimal representations}
-
-#maybe the effects not working because we need to corr per trial rather than compute a deviation score 
-
-# get absolute deviation from model prediction
-data$ModelDeviation = abs(data$sVGC.Obs-data$Aware.ReportObs.scaled)
-
-data4reg = data %>% group_by(Subject.Code, Trial.Number, MazeID_clean, Lateralized) %>% summarize(RT = mean(Solution.RT), deltaMove= mean(deltaMove), ModelDeviation= sum(ModelDeviation))
-
-# need to add subject intercept!!
-lm0= lmer(RT ~  (1 | MazeID_clean) + (1 | Subject.Code) , data= data4reg)
-lm1= lmer(RT ~  (1 | MazeID_clean) + (1 | Subject.Code) + ModelDeviation, data= data4reg)
-anova(lm0,lm1)
-
-# need to add subject intercept!!
-lm0= lmer(deltaMove ~  (1 | MazeID_clean) + (1 | Subject.Code) , data= data4reg)
-lm1= lmer(deltaMove ~  (1 | MazeID_clean) + (1 | Subject.Code) + ModelDeviation, data= data4reg)
-anova(lm0,lm1)
-
-```
-
-# prediction is that participants will be faster on trials where awareness and VGC model prediction are more closeley related 
-
-# could try computing the corr first and then using this in the regression but unsure if this is the equivelant of a moderation effect 
-
-
-```{r explore what awareness is like on poor execution trials}
-
-
-dataBAD$sVGC.Obs.zscore= scale(dataBAD$sVGC.Obs)[,1]
-dataBAD$dVGC.Obs.zscore= scale(dataBAD$dVGC.Obs)[,1]
-dataBAD$Lateralized.zscore= scale(dataBAD$Lateralized)[,1]
-dataBAD$Aware.ReportObs.scaled= scale(dataBAD$Aware.ReportObs)[,1]
-
-# need to add subject intercept!!
-lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) , data= dataBAD)
-lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + sVGC.Obs.zscore, data= dataBAD)
-lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + dVGC.Obs.zscore, data= dataBAD)
-anova(lm0,lm1,lm2)
-
-sjPlot::tab_model(lm1)
-# significant effect of sVGC and dVGC but they are very weak, explaining little var
-
-# shows that when people misconstrue their environments, their perfoemnace is worse 
-
-
-# need to add subject intercept!!
-lm0= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block, data= data)
-lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block+ dVGC.Obs.zscore, data= data)
-lm2= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code) + Block + dVGC.Obs.zscore + Lateralized.zscore, data= data)
-lm3= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ Block+ dVGC.Obs.zscore * Lateralized.zscore, data= data)
-lm4= lmer(Aware.ReportObs.scaled ~  (1 | MazeID) + (1 | Subject.Code)+ Block+ dVGC.Obs.zscore * Lateralized.zscore*Block, data= data)
-anova(lm0,lm1, lm2, lm3, lm4)
-
-sjPlot::tab_model(lm3)
-# we observe the same thing for the dynamic construals 
-
-
-# small effect of block for both sVGC and dVGC
-# but this block effect does not interact with our interaction effect of interest! 
-# this means that while participants are less likely to report being aware of an obstacle with increasing trials, this does not impact the effect of the model or lateralization effects 
-# so our lateralization effect is not bc people are tired 
-```
-
-
 
