@@ -7,7 +7,7 @@ Human planning is efficient—it frugally deploys limited cognitive resources to
 
 ## Data
 
-Behaviour csv file containing all data collected in Experiment 3. This included participants' awareness reports, reaction times, and the sVGC model predictions for each obstacle on every trial.  Eye-tracking data is available from the authors upon reasonable request. 
+Behaviour csv file containing all data collected in Experiment 3. This included participants' awareness reports, reaction times, and the sVGC model predictions for each obstacle on every trial.  Eye-tracking data is available from the project [OSF](https://osf.io/sa6vf/.).
 
 Data from experiments 1 and 2 are available from the [VGC project github](https://github.com/markkho/value-guided-construal/tree/main). Please see [Ho et al., 2022](https://www.nature.com/articles/s41586-022-04743-9) for details on the experimental procedures and the data
 
