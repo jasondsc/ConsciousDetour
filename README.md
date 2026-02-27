@@ -1,10 +1,14 @@
 # Exploring the neural interplay of conscious perception and task representations.
 
+
 This gitHub repository contains code for the following project: 
 
-Jason da Silva CastanheiraNicholas SheaStephen M Fleming2025How attention simplifies mental representations for planningeLife14:RP108034
-https://elifesciences.org/reviewed-preprints/108034 
+Jason da Silva CastanheiraNicholas SheaStephen M Fleming2025 [How attention simplifies mental representations for planning](https://elifesciences.org/reviewed-preprints/108034 ) eLife14:RP108034
 
+
+## Background
+
+## Data
 
 
 The TaskVGCCode folder contains code to run experiment 3 (i.e., the Eye-tracking experiment). To see the Maze stimuli used for this experiment please see the mazes folder inside this directory.
