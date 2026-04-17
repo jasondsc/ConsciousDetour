@@ -1010,20 +1010,15 @@ ggsave('~/Documents/ValueBasedConstrualTask/value-guided-construal-main/ResultsE
 
 
 
-lm1= lmer(Aware.ReportObs.scaled ~ (1| Subject.Code) + OptimalMoves + sVGC.Obs.zscore, data)
-sjPlot::tab_model(lm1)
-
-lm1= lmer(Aware.ReportObs.scaled ~ (1| Subject.Code) + OptimalMoves + sVGC.Obs.zscore*Solution.RT, data)
-sjPlot::tab_model(lm1)
-
 
 data$sVGC.Obs.zscore= scale(data$sVGC.Obs)[,1]
 data$lat_sVGC_scaled= scale(data$lateralized_values_sVGC)[,1]
 # Regress Out the effect of sVGC on awareness to get a measure of model fit per tral 
-lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+ OptimalMoves + sVGC.Obs.zscore, data= data)
+lm1= lmer(Aware.ReportObs.scaled ~  (1 | MazeID_clean) + (1 | Subject.Code)+  sVGC.Obs.zscore*lat_sVGC_scaled, data= data)
 data$residuals = residuals(lm1)
+data$unexplained_var = data$sVGC.Obs - data$Aware.ReportObs.scaled
 
-datasummary = data %>% group_by(Subject.Code, MazeID_clean,Trial.Number, Lateralized, lateralized_values_sVGC) %>% summarise(RT= log10(mean(Solution.RT)), deltamoves= mean(deltaMove), moves = mean(OptimalMoves), MSEAware = mean(residuals^2))
+datasummary = data %>% group_by(Subject.Code, MazeID_clean,Trial.Number, Lateralized, lateralized_values_sVGC) %>% summarise(RT= log10(mean(Solution.RT)), deltamoves= mean(deltaMove), moves = mean(OptimalMoves), MSEAware = mean(residuals^2), unexplained_var= mean(unexplained_var^2))
 
 lm1= lmer(RT ~ (1| Subject.Code) + moves + MSEAware, datasummary)
 sjPlot::tab_model(lm1)
